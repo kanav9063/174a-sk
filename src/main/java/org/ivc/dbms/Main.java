@@ -43,7 +43,7 @@ public class Main {
             // System.out.println("addCourse returned: " + ok);
             // boolean test_delete = db.dropCourse("14682", "CS130");  // trying delete
             // System.out.println("dropCourse returned: " + test_delete);
-             db.listCurrentCourses("1234567");
+             db.listAllCourses("1234567");
             // System.out.println("listCurrentCourses returned: " + currClasses);
 
 

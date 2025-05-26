@@ -51,7 +51,8 @@ insert into course values ( 'CS130',
                             'Data Structures' );
 insert into course values ( 'CS026',
                             'Intro to CS' );
-
+insert into course values ( 'CS699',
+                            'AI for education' );
 -- =========================
 -- 5. Quarters
 -- =========================

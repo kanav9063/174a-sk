@@ -179,7 +179,9 @@ public class DatabaseManager {
 //         }
 //     }
 // }
-
+/**
+ * listing all courses enrolled in the current quarter, gold feature.
+ */
     public void listCurrentCourses(String perm) throws SQLException {
         final int QUARTER_ID = 1;
         
@@ -224,5 +226,53 @@ public class DatabaseManager {
             }
         }
     }
+
+/**
+ * list all courses taken by a student, registrar feature
+ * ima assume this is not only current quarter but all quarters.
+ */
+public void listAllCourses(String perm) throws SQLException {
+    // First show current courses
+    listCurrentCourses(perm);
+    
+    // Then show past courses
+    String pastSql = 
+        "SELECT co.quarter_id, co.cno, c.title, co.pfirst_name, co.plast_name, " +
+        "       tc.grade, q.year, q.term " +
+        "FROM took_courses tc, courseoffering_offeredin co, course c, quarter q " +
+        "WHERE tc.enrollment_id = co.enrollment_id " +
+        "AND co.cno = c.cno " +
+        "AND co.quarter_id = q.quarterid " +
+        "AND tc.perm = ? " +  // Add filter for student
+        "ORDER BY q.year DESC, q.term DESC, co.cno";
+
+    try (PreparedStatement ps = conn.prepareStatement(pastSql)) {
+        ps.setString(1, perm);
+        
+        try (ResultSet rs = ps.executeQuery()) {
+            System.out.println("\nPast Courses:");
+            System.out.println("Quarter | Course | Title                | Grade | Instructor");
+            System.out.println("--------|--------|----------------------|-------|------------");
+            
+            boolean hasResults = false;
+            while (rs.next()) {
+                hasResults = true;
+                String quarter = rs.getString("year") + " " + rs.getString("term");
+                String cno = rs.getString("cno");
+                String title = rs.getString("title");
+                String grade = rs.getString("grade");
+                String instructor = (rs.getString("pfirst_name") != null ? rs.getString("pfirst_name") + " " : "") + 
+                                  (rs.getString("plast_name") != null ? rs.getString("plast_name") : "TBA");
+                
+                System.out.printf("%-7s | %-6s | %-20s | %-5s | %s%n",
+                    quarter, cno, title, grade, instructor.trim());
+            }
+            
+            if (!hasResults) {
+                System.out.println("No past courses found.");
+            }
+        }
+    }
+}
 
 }

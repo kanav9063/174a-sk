@@ -31,13 +31,13 @@ insert into major_managedby values ( 'ECE',
 -- =========================
 -- 3. Students (must use 4-digit PINs!)
 -- =========================
-insert into student values ( '12345',
+insert into student values ( '1234567',
                              'Alfred Hitchcock',
                              '6667 El Colegio #40',
                              '1234',
                              'CS',
                              'CS' );
-insert into student values ( '14682',
+insert into student values ( '1468222',
                              'Billy Clinton',
                              '5777 Hollister',
                              '4321',
@@ -89,12 +89,23 @@ insert into courseoffering_offeredin values ( 76543,
 -- =========================
 -- 7. Grades from previous quarter
 -- =========================
-insert into took_courses values ( '12345',
+insert into took_courses values ( '1234567',
                                   56789,
                                   'B' );  -- CS130
-insert into took_courses values ( '12345',
+insert into took_courses values ( '1234567',
                                   76543,
                                   'A' );  -- CS026
+
+-- added by skanda for enrolled table..., from chat
+-- Add current enrollments for testing
+INSERT INTO enrolled VALUES ('1234567', 56789);  -- Enroll Alfred in CS130
+INSERT INTO enrolled VALUES ('1234567', 76543);  -- Enroll Alfred in CS026
+INSERT INTO enrolled VALUES ('1234567', 56789);  -- Enroll Billy in CS130
+
+-- Update enrollment counts
+UPDATE courseoffering_offeredin SET act_enrolled = 2 WHERE enrollment_id = 56789;  -- CS130 has 2 students
+UPDATE courseoffering_offeredin SET act_enrolled = 1 WHERE enrollment_id = 76543;  -- CS026 has 1 student
+
 
 
 select *
@@ -104,4 +115,5 @@ select *
 select *
   from took_courses;
 
+commit;
  

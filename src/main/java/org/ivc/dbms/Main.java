@@ -39,10 +39,12 @@ public class Main {
             // 5) Create your manager and call its methods
             DatabaseManager db = new DatabaseManager(conn);
             db.listAllStudents();                     // print students
-            boolean ok = db.addCourse("12345", "CS130");  // try enroll
-            System.out.println("addCourse returned: " + ok);
-            boolean test_delete = db.dropCourse("12345", "CS130");  // trying delete
-            System.out.println("dropCourse returned: " + test_delete);
+            // boolean ok = db.addCourse("14682", "CS130");  // try enroll
+            // System.out.println("addCourse returned: " + ok);
+            // boolean test_delete = db.dropCourse("14682", "CS130");  // trying delete
+            // System.out.println("dropCourse returned: " + test_delete);
+             db.listCurrentCourses("1234567");
+            // System.out.println("listCurrentCourses returned: " + currClasses);
 
 
 

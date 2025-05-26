@@ -123,61 +123,106 @@ public class DatabaseManager {
     /**
  * copying structure from addCourse, idk if this is correct lol.
  */
-public boolean dropCourse(String perm, String cno) throws SQLException {
-    final int QUARTER_ID = 1;
+// public boolean dropCourse(String perm, String cno) throws SQLException {
+//     final int QUARTER_ID = 1;
 
-        // Step 1: Find enrollment record
-        String findSql = 
-            "SELECT e.Enrollment_id FROM Enrolled e " +
-            "WHERE e.Perm = ? AND e.Enrollment_id IN " + 
-            "(SELECT Enrollment_id FROM CourseOffering_offeredin " +
-            "WHERE TRIM(cno) = ? AND Quarter_id = ?)";
+//         // Step 1: Find enrollment record
+//         String findSql = 
+//             "SELECT e.Enrollment_id FROM Enrolled e " +
+//             "WHERE e.Perm = ? AND e.Enrollment_id IN " + 
+//             "(SELECT Enrollment_id FROM CourseOffering_offeredin " +
+//             "WHERE TRIM(cno) = ? AND Quarter_id = ?)";
 
-    try (PreparedStatement ps = conn.prepareStatement(findSql)) {
-        ps.setString(1, perm);
-        ps.setString(2, cno.trim());
-        ps.setInt(3, QUARTER_ID);
+//     try (PreparedStatement ps = conn.prepareStatement(findSql)) {
+//         ps.setString(1, perm);
+//         ps.setString(2, cno.trim());
+//         ps.setInt(3, QUARTER_ID);
 
-        try (ResultSet rs = ps.executeQuery()) {
-            if (!rs.next()) {
-                System.out.println("Not enrolled in " + cno);
-                return false;
-            }
+//         try (ResultSet rs = ps.executeQuery()) {
+//             if (!rs.next()) {
+//                 System.out.println("Not enrolled in " + cno);
+//                 return false;
+//             }
 
-            int enrollmentId = rs.getInt("Enrollment_id");
+//             int enrollmentId = rs.getInt("Enrollment_id");
 
-            // Step 2: Check if this is the student's only course
-            String countSql = "SELECT COUNT(*) FROM Enrolled WHERE Perm = ?";
-            try (PreparedStatement psCount = conn.prepareStatement(countSql)) {
-                psCount.setString(1, perm);
-                try (ResultSet rsCount = psCount.executeQuery()) {
-                    rsCount.next();
-                    if (rsCount.getInt(1) <= 1) {
-                        System.out.println("Cannot drop - must be enrolled in at least one course.");
-                        return false;
-                    }
+//             // Step 2: Check if this is the student's only course
+//             String countSql = "SELECT COUNT(*) FROM Enrolled WHERE Perm = ?";
+//             try (PreparedStatement psCount = conn.prepareStatement(countSql)) {
+//                 psCount.setString(1, perm);
+//                 try (ResultSet rsCount = psCount.executeQuery()) {
+//                     rsCount.next();
+//                     if (rsCount.getInt(1) <= 1) {
+//                         System.out.println("Cannot drop - must be enrolled in at least one course.");
+//                         return false;
+//                     }
+//                 }
+//             }
+
+//             // Step 3: Remove enrollment record
+//             String deleteSql = "DELETE FROM Enrolled WHERE Perm = ? AND Enrollment_id = ?";
+//             try (PreparedStatement psDelete = conn.prepareStatement(deleteSql)) {
+//                 psDelete.setString(1, perm);
+//                 psDelete.setInt(2, enrollmentId);
+//                 psDelete.executeUpdate();
+//             }
+
+//             // Step 4: Update act_enrolled count
+//             String updateSql = "UPDATE CourseOffering_offeredin SET Act_enrolled = Act_enrolled - 1 WHERE Enrollment_id = ?";
+//             try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+//                 psUpdate.setInt(1, enrollmentId);
+//                 psUpdate.executeUpdate();
+//             }
+
+//             System.out.println("Successfully dropped " + cno);
+//             return true;
+//         }
+//     }
+// }
+
+    public void listCurrentCourses(String perm) throws SQLException {
+        final int QUARTER_ID = 1;
+        
+        String sql = 
+            "SELECT co.cno, c.title, co.act_enrolled, co.max_enrollment, " +
+            "       co.pfirst_name, co.plast_name, co.building_code, co.room_num, co.time_slot " +
+            "FROM courseoffering_offeredin co, course c " +
+            "WHERE co.cno = c.cno " +
+            "AND co.quarter_id = ? " +
+            "AND co.enrollment_id IN (SELECT enrollment_id FROM enrolled WHERE perm = ?) " +
+            "ORDER BY co.cno";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, QUARTER_ID);
+            ps.setString(2, perm);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                System.out.println("Current Quarter Courses for Student " + perm + ":");
+                System.out.println("Course | Title                | Enrolled/Max | Instructor        | Location");
+                System.out.println("-------|----------------------|--------------|-------------------|----------");
+                
+                boolean hasResults = false;
+                while (rs.next()) {
+                    hasResults = true;
+                    String cno = rs.getString("cno");
+                    String title = rs.getString("title");
+                    int enrolled = rs.getInt("act_enrolled");
+                    int maxEnroll = rs.getInt("max_enrollment");
+                    String instructor = (rs.getString("pfirst_name") != null ? rs.getString("pfirst_name") + " " : "") + 
+                                      (rs.getString("plast_name") != null ? rs.getString("plast_name") : "TBA");
+                    String location = (rs.getString("building_code") != null ? rs.getString("building_code") : "") + 
+                                    " " + (rs.getString("room_num") != null ? rs.getString("room_num") : "");
+                    String timeSlot = rs.getString("time_slot") != null ? rs.getString("time_slot") : "TBA";
+                    
+                    System.out.printf("%-6s | %-20s | %3d/%-3d      | %-17s | %s %s%n",
+                        cno, title, enrolled, maxEnroll, instructor.trim(), location.trim(), timeSlot);
+                }
+                
+                if (!hasResults) {
+                    System.out.println("No courses enrolled in current quarter.");
                 }
             }
-
-            // Step 3: Remove enrollment record
-            String deleteSql = "DELETE FROM Enrolled WHERE Perm = ? AND Enrollment_id = ?";
-            try (PreparedStatement psDelete = conn.prepareStatement(deleteSql)) {
-                psDelete.setString(1, perm);
-                psDelete.setInt(2, enrollmentId);
-                psDelete.executeUpdate();
-            }
-
-            // Step 4: Update act_enrolled count
-            String updateSql = "UPDATE CourseOffering_offeredin SET Act_enrolled = Act_enrolled - 1 WHERE Enrollment_id = ?";
-            try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
-                psUpdate.setInt(1, enrollmentId);
-                psUpdate.executeUpdate();
-            }
-
-            System.out.println("Successfully dropped " + cno);
-            return true;
         }
     }
-}
-    
+
 }

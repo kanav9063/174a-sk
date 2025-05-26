@@ -119,4 +119,65 @@ public class DatabaseManager {
             }
         }
     }
+
+    /**
+ * copying structure from addCourse, idk if this is correct lol.
+ */
+public boolean dropCourse(String perm, String cno) throws SQLException {
+    final int QUARTER_ID = 1;
+
+        // Step 1: Find enrollment record
+        String findSql = 
+            "SELECT e.Enrollment_id FROM Enrolled e " +
+            "WHERE e.Perm = ? AND e.Enrollment_id IN " + 
+            "(SELECT Enrollment_id FROM CourseOffering_offeredin " +
+            "WHERE TRIM(cno) = ? AND Quarter_id = ?)";
+
+    try (PreparedStatement ps = conn.prepareStatement(findSql)) {
+        ps.setString(1, perm);
+        ps.setString(2, cno.trim());
+        ps.setInt(3, QUARTER_ID);
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (!rs.next()) {
+                System.out.println("Not enrolled in " + cno);
+                return false;
+            }
+
+            int enrollmentId = rs.getInt("Enrollment_id");
+
+            // Step 2: Check if this is the student's only course
+            String countSql = "SELECT COUNT(*) FROM Enrolled WHERE Perm = ?";
+            try (PreparedStatement psCount = conn.prepareStatement(countSql)) {
+                psCount.setString(1, perm);
+                try (ResultSet rsCount = psCount.executeQuery()) {
+                    rsCount.next();
+                    if (rsCount.getInt(1) <= 1) {
+                        System.out.println("Cannot drop - must be enrolled in at least one course.");
+                        return false;
+                    }
+                }
+            }
+
+            // Step 3: Remove enrollment record
+            String deleteSql = "DELETE FROM Enrolled WHERE Perm = ? AND Enrollment_id = ?";
+            try (PreparedStatement psDelete = conn.prepareStatement(deleteSql)) {
+                psDelete.setString(1, perm);
+                psDelete.setInt(2, enrollmentId);
+                psDelete.executeUpdate();
+            }
+
+            // Step 4: Update act_enrolled count
+            String updateSql = "UPDATE CourseOffering_offeredin SET Act_enrolled = Act_enrolled - 1 WHERE Enrollment_id = ?";
+            try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+                psUpdate.setInt(1, enrollmentId);
+                psUpdate.executeUpdate();
+            }
+
+            System.out.println("Successfully dropped " + cno);
+            return true;
+        }
+    }
+}
+    
 }

@@ -14,7 +14,7 @@ public class Main {
 
     // 1) Your database alias (from Oracle Cloud) + wallet path
     private static final String DB_ALIAS = "cs174adb_low";
-    private static final String WALLET_DIR = "/Users/quicktech/Desktop/cs174a-project/wallet_CS174ADB";
+    private static final String WALLET_DIR = "wallet_CS174ADB";
 
     // 2) Build the JDBC URL using alias + TNS_ADMIN
     private static final String DB_URL
@@ -41,6 +41,10 @@ public class Main {
             db.listAllStudents();                     // print students
             boolean ok = db.addCourse("12345", "CS130");  // try enroll
             System.out.println("addCourse returned: " + ok);
+            boolean test_delete = db.dropCourse("12345", "CS130");  // trying delete
+            System.out.println("dropCourse returned: " + test_delete);
+
+
 
             // 6) Clean up
             db.close();

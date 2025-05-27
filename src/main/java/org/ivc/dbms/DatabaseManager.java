@@ -5,6 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.BufferedReader;
 
 /**
  * Encapsulates basic database operations for IVC.
@@ -39,8 +44,7 @@ public class DatabaseManager {
     }
 
     /**
-     * Enro
-     * lls student `perm` in course `cno` (for quarter_id = 1).
+     * Enrolls student `perm` in course `cno` (for quarter_id = 1).
      * Returns true on success, false otherwise.
      */
     public boolean addCourse(String perm, String cno) throws SQLException {
@@ -121,67 +125,67 @@ public class DatabaseManager {
     }
 
     /**
- * copying structure from addCourse, idk if this is correct lol.
- */
-// public boolean dropCourse(String perm, String cno) throws SQLException {
-//     final int QUARTER_ID = 1;
+     * copying structure from addCourse, idk if this is correct lol.
+     */
+    // public boolean dropCourse(String perm, String cno) throws SQLException {
+    //     final int QUARTER_ID = 1;
 
-//         // Step 1: Find enrollment record
-//         String findSql = 
-//             "SELECT e.Enrollment_id FROM Enrolled e " +
-//             "WHERE e.Perm = ? AND e.Enrollment_id IN " + 
-//             "(SELECT Enrollment_id FROM CourseOffering_offeredin " +
-//             "WHERE TRIM(cno) = ? AND Quarter_id = ?)";
+    //         // Step 1: Find enrollment record
+    //         String findSql = 
+    //             "SELECT e.Enrollment_id FROM Enrolled e " +
+    //             "WHERE e.Perm = ? AND e.Enrollment_id IN " + 
+    //             "(SELECT Enrollment_id FROM CourseOffering_offeredin " +
+    //             "WHERE TRIM(cno) = ? AND Quarter_id = ?)";
 
-//     try (PreparedStatement ps = conn.prepareStatement(findSql)) {
-//         ps.setString(1, perm);
-//         ps.setString(2, cno.trim());
-//         ps.setInt(3, QUARTER_ID);
+    //     try (PreparedStatement ps = conn.prepareStatement(findSql)) {
+    //         ps.setString(1, perm);
+    //         ps.setString(2, cno.trim());
+    //         ps.setInt(3, QUARTER_ID);
 
-//         try (ResultSet rs = ps.executeQuery()) {
-//             if (!rs.next()) {
-//                 System.out.println("Not enrolled in " + cno);
-//                 return false;
-//             }
+    //         try (ResultSet rs = ps.executeQuery()) {
+    //             if (!rs.next()) {
+    //                 System.out.println("Not enrolled in " + cno);
+    //                 return false;
+    //             }
 
-//             int enrollmentId = rs.getInt("Enrollment_id");
+    //             int enrollmentId = rs.getInt("Enrollment_id");
 
-//             // Step 2: Check if this is the student's only course
-//             String countSql = "SELECT COUNT(*) FROM Enrolled WHERE Perm = ?";
-//             try (PreparedStatement psCount = conn.prepareStatement(countSql)) {
-//                 psCount.setString(1, perm);
-//                 try (ResultSet rsCount = psCount.executeQuery()) {
-//                     rsCount.next();
-//                     if (rsCount.getInt(1) <= 1) {
-//                         System.out.println("Cannot drop - must be enrolled in at least one course.");
-//                         return false;
-//                     }
-//                 }
-//             }
+    //             // Step 2: Check if this is the student's only course
+    //             String countSql = "SELECT COUNT(*) FROM Enrolled WHERE Perm = ?";
+    //             try (PreparedStatement psCount = conn.prepareStatement(countSql)) {
+    //                 psCount.setString(1, perm);
+    //                 try (ResultSet rsCount = psCount.executeQuery()) {
+    //                     rsCount.next();
+    //                     if (rsCount.getInt(1) <= 1) {
+    //                         System.out.println("Cannot drop - must be enrolled in at least one course.");
+    //                         return false;
+    //                     }
+    //                 }
+    //             }
 
-//             // Step 3: Remove enrollment record
-//             String deleteSql = "DELETE FROM Enrolled WHERE Perm = ? AND Enrollment_id = ?";
-//             try (PreparedStatement psDelete = conn.prepareStatement(deleteSql)) {
-//                 psDelete.setString(1, perm);
-//                 psDelete.setInt(2, enrollmentId);
-//                 psDelete.executeUpdate();
-//             }
+    //             // Step 3: Remove enrollment record
+    //             String deleteSql = "DELETE FROM Enrolled WHERE Perm = ? AND Enrollment_id = ?";
+    //             try (PreparedStatement psDelete = conn.prepareStatement(deleteSql)) {
+    //                 psDelete.setString(1, perm);
+    //                 psDelete.setInt(2, enrollmentId);
+    //                 psDelete.executeUpdate();
+    //             }
 
-//             // Step 4: Update act_enrolled count
-//             String updateSql = "UPDATE CourseOffering_offeredin SET Act_enrolled = Act_enrolled - 1 WHERE Enrollment_id = ?";
-//             try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
-//                 psUpdate.setInt(1, enrollmentId);
-//                 psUpdate.executeUpdate();
-//             }
+    //             // Step 4: Update act_enrolled count
+    //             String updateSql = "UPDATE CourseOffering_offeredin SET Act_enrolled = Act_enrolled - 1 WHERE Enrollment_id = ?";
+    //             try (PreparedStatement psUpdate = conn.prepareStatement(updateSql)) {
+    //                 psUpdate.setInt(1, enrollmentId);
+    //                 psUpdate.executeUpdate();
+    //             }
 
-//             System.out.println("Successfully dropped " + cno);
-//             return true;
-//         }
-//     }
-// }
-/**
- * listing all courses enrolled in the current quarter, gold feature.
- */
+    //             System.out.println("Successfully dropped " + cno);
+    //             return true;
+    //         }
+    //     }
+    // }
+    /**
+     * listing all courses enrolled in the current quarter, gold feature.
+     */
     public void listCurrentCourses(String perm) throws SQLException {
         final int QUARTER_ID = 1;
         
@@ -227,52 +231,236 @@ public class DatabaseManager {
         }
     }
 
-/**
- * list all courses taken by a student, registrar feature
- * ima assume this is not only current quarter but all quarters.
- */
-public void listAllCourses(String perm) throws SQLException {
-    // First show current courses
-    listCurrentCourses(perm);
-    
-    // Then show past courses
-    String pastSql = 
-        "SELECT co.quarter_id, co.cno, c.title, co.pfirst_name, co.plast_name, " +
-        "       tc.grade, q.year, q.term " +
-        "FROM took_courses tc, courseoffering_offeredin co, course c, quarter q " +
-        "WHERE tc.enrollment_id = co.enrollment_id " +
-        "AND co.cno = c.cno " +
-        "AND co.quarter_id = q.quarterid " +
-        "AND tc.perm = ? " +  // Add filter for student
-        "ORDER BY q.year DESC, q.term DESC, co.cno";
+    /**
+     * list grades from just the previous quarter, registrar feature
+     */
+    public void listPrevQuarterGrades(String perm) throws SQLException {    
+        //show past courses from previous quarter
+        String pastSql = 
+            "SELECT co.quarter_id, co.cno, c.title, co.pfirst_name, co.plast_name, " +
+            "       tc.grade, q.year, q.term " +
+            "FROM took_courses tc, courseoffering_offeredin co, course c, quarter q " +
+            "WHERE tc.enrollment_id = co.enrollment_id " +
+            "AND co.cno = c.cno " +
+            "AND co.quarter_id = q.quarterid " +
+            "AND tc.perm = ? " + 
+            "AND co.quarter_id = (SELECT MAX(quarterid) FROM quarter WHERE quarterid < 1) " + // for now, this won't work because we need a separate quarterid and current quarter flag
+            "ORDER BY co.cno";
 
-    try (PreparedStatement ps = conn.prepareStatement(pastSql)) {
-        ps.setString(1, perm);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            System.out.println("\nPast Courses:");
-            System.out.println("Quarter | Course | Title                | Grade | Instructor");
-            System.out.println("--------|--------|----------------------|-------|------------");
+        try (PreparedStatement ps = conn.prepareStatement(pastSql)) {
+            ps.setString(1, perm);
             
-            boolean hasResults = false;
-            while (rs.next()) {
-                hasResults = true;
-                String quarter = rs.getString("year") + " " + rs.getString("term");
-                String cno = rs.getString("cno");
-                String title = rs.getString("title");
-                String grade = rs.getString("grade");
-                String instructor = (rs.getString("pfirst_name") != null ? rs.getString("pfirst_name") + " " : "") + 
-                                  (rs.getString("plast_name") != null ? rs.getString("plast_name") : "TBA");
+            try (ResultSet rs = ps.executeQuery()) {
+                System.out.println("\nPrevious Quarter Courses:");
+                System.out.println("Course | Title                | Grade | Instructor");
+                System.out.println("-------|----------------------|-------|------------");
                 
-                System.out.printf("%-7s | %-6s | %-20s | %-5s | %s%n",
-                    quarter, cno, title, grade, instructor.trim());
-            }
-            
-            if (!hasResults) {
-                System.out.println("No past courses found.");
+                boolean hasResults = false;
+                while (rs.next()) {
+                    hasResults = true;
+                    String cno = rs.getString("cno");
+                    String title = rs.getString("title");
+                    String grade = rs.getString("grade");
+                    String instructor = (rs.getString("pfirst_name") != null ? rs.getString("pfirst_name") + " " : "") + 
+                                      (rs.getString("plast_name") != null ? rs.getString("plast_name") : "TBA");
+                    
+                    System.out.printf("%-6s | %-20s | %-5s | %s%n",
+                        cno, title, grade, instructor.trim());
+                }
+                
+                if (!hasResults) {
+                    System.out.println("No courses found from previous quarter.");
+                }
             }
         }
     }
-}
 
+    /**
+     * Enters grades for all students in a course from a JSON file.
+     * Expected JSON format - similar to slack:
+     * {
+     *   "enrollment_id": 56789,
+     *   "grades": [
+     *     { "perm": "1234567", "grade": "B" },
+     *     { "perm": "1468222", "grade": "A" }
+     *   ]
+     * }
+     * 
+     * for correct usage make sure add the JSON library dependency to your pom.xml. Add this inside the <dependencies> section
+     * <dependency>
+     * <groupId>org.json</groupId>
+     * <artifactId>json</artifactId>
+     * <version>20231013</version>
+     * </dependency>
+     * Then run mvn clean install to make sure the JSON library is included.
+     * do i need to add validation here for duplicate grades (ie if the same student shows up twice)
+     */
+    public boolean enterGradesFromFile(String filename) throws SQLException {
+        try {
+            StringBuilder jsonContent = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonContent.append(line);
+                }
+            }
+            
+            JSONObject json = new JSONObject(jsonContent.toString());
+            int enrollmentId = json.getInt("enrollment_id");
+            JSONArray grades = json.getJSONArray("grades");
+            
+            String verifySql = 
+                "SELECT 1 FROM courseoffering_offeredin WHERE enrollment_id = ?";
+            
+            try (PreparedStatement ps = conn.prepareStatement(verifySql)) {
+                ps.setInt(1, enrollmentId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        System.out.println("Error: Course offering " + enrollmentId + " not found.");
+                        return false;
+                    }
+                }
+            }
+            
+            // Process grades
+            int successCount = 0;
+            int failCount = 0;
+            
+            for (int i = 0; i < grades.length(); i++) {
+                JSONObject gradeEntry = grades.getJSONObject(i);
+                String perm = gradeEntry.getString("perm");
+                String grade = gradeEntry.getString("grade");
+                
+                if (!grade.matches("^[A-C][+-]?|D|F$")) {
+                    System.out.println("Invalid grade format for student " + perm + ": " + grade);
+                    failCount++;
+                    continue;
+                }
+                
+                String insertSql = 
+                    "INSERT INTO took_courses (perm, enrollment_id, grade) " +
+                    "VALUES (?, ?, ?)";
+                
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    ps.setString(1, perm);
+                    ps.setInt(2, enrollmentId);
+                    ps.setString(3, grade);
+                    ps.executeUpdate();
+                    successCount++;
+                } catch (SQLException e) {
+                    System.out.println("Error entering grade for student " + perm + ": " + e.getMessage());
+                    failCount++;
+                }
+            }
+            
+            System.out.println("Grade entry complete for enrollment " + enrollmentId + ":");
+            System.out.println("Successfully entered: " + successCount + " grades");
+            System.out.println("Failed to enter: " + failCount + " grades");
+            
+            return failCount == 0;
+            
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            System.out.println("Error processing JSON: " + e.getMessage());
+            return false;
+        }
+    }
+
+        /**
+     * request transcript, registrar feature
+     */
+    public void requestTranscript(String perm) throws SQLException {
+        // First show current courses
+        // listCurrentCourses(perm);
+        
+        // Then show past courses
+        String pastSql = 
+            "SELECT co.quarter_id, co.cno, c.title, co.pfirst_name, co.plast_name, " +
+            "       tc.grade, q.year, q.term " +
+            "FROM took_courses tc, courseoffering_offeredin co, course c, quarter q " +
+            "WHERE tc.enrollment_id = co.enrollment_id " +
+            "AND co.cno = c.cno " +
+            "AND co.quarter_id = q.quarterid " +
+            "AND tc.perm = ? " +  // Add filter for student
+            "ORDER BY q.year DESC, q.term DESC, co.cno";
+
+        try (PreparedStatement ps = conn.prepareStatement(pastSql)) {
+            ps.setString(1, perm);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                System.out.println("\nPast Courses:");
+                System.out.println("Quarter | Course | Title                | Grade | Instructor");
+                System.out.println("--------|--------|----------------------|-------|------------");
+                
+                boolean hasResults = false;
+                while (rs.next()) {
+                    hasResults = true;
+                    String quarter = rs.getString("year") + " " + rs.getString("term");
+                    String cno = rs.getString("cno");
+                    String title = rs.getString("title");
+                    String grade = rs.getString("grade");
+                    String instructor = (rs.getString("pfirst_name") != null ? rs.getString("pfirst_name") + " " : "") + 
+                                      (rs.getString("plast_name") != null ? rs.getString("plast_name") : "TBA");
+                    
+                    System.out.printf("%-7s | %-6s | %-20s | %-5s | %s%n",
+                        quarter, cno, title, grade, instructor.trim());
+                }
+                
+                if (!hasResults) {
+                    System.out.println("No past courses found.");
+                }
+            }
+        }
+    }
+
+        /**
+     * list all courses taken by a student, registrar feature
+     * ima assume this is not only current quarter but all quarters.
+     * commenting this one out cuz ion think we need it, the doc says for a list of courses taken by a student assuming thats current q
+     */
+    // public void listAllCourses(String perm) throws SQLException {
+    //     // First show current courses
+    //     listCurrentCourses(perm);
+        
+    //     // Then show past courses
+    //     String pastSql = 
+    //         "SELECT co.quarter_id, co.cno, c.title, co.pfirst_name, co.plast_name, " +
+    //         "       tc.grade, q.year, q.term " +
+    //         "FROM took_courses tc, courseoffering_offeredin co, course c, quarter q " +
+    //         "WHERE tc.enrollment_id = co.enrollment_id " +
+    //         "AND co.cno = c.cno " +
+    //         "AND co.quarter_id = q.quarterid " +
+    //         "AND tc.perm = ? " +  // Add filter for student
+    //         "ORDER BY q.year DESC, q.term DESC, co.cno";
+
+    //     try (PreparedStatement ps = conn.prepareStatement(pastSql)) {
+    //         ps.setString(1, perm);
+            
+    //         try (ResultSet rs = ps.executeQuery()) {
+    //             System.out.println("\nPast Courses:");
+    //             System.out.println("Quarter | Course | Title                | Grade | Instructor");
+    //             System.out.println("--------|--------|----------------------|-------|------------");
+                
+    //             boolean hasResults = false;
+    //             while (rs.next()) {
+    //                 hasResults = true;
+    //                 String quarter = rs.getString("year") + " " + rs.getString("term");
+    //                 String cno = rs.getString("cno");
+    //                 String title = rs.getString("title");
+    //                 String grade = rs.getString("grade");
+    //                 String instructor = (rs.getString("pfirst_name") != null ? rs.getString("pfirst_name") + " " : "") + 
+    //                                   (rs.getString("plast_name") != null ? rs.getString("plast_name") : "TBA");
+                    
+    //                 System.out.printf("%-7s | %-6s | %-20s | %-5s | %s%n",
+    //                     quarter, cno, title, grade, instructor.trim());
+    //             }
+                
+    //             if (!hasResults) {
+    //                 System.out.println("No past courses found.");
+    //             }
+    //         }
+    //     }
+    // }
 }

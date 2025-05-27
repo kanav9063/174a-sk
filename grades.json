@@ -1,0 +1,7 @@
+{
+    "enrollment_id": 56789,
+    "grades": [
+      { "perm": "1234567", "grade": "F" },
+      { "perm": "1468222", "grade": "C" }
+    ]
+  }

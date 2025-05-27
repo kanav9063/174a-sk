@@ -60,6 +60,11 @@ insert into quarter values ( 1,
                              'Winter',
                              date '2025-01-10',
                              date '2025-03-20' );
+insert into quarter values ( 2,
+                             2025,
+                             'Spring',
+                             date '2025-03-21',
+                             date '2025-06-20' );
 
 -- =========================
 -- 6. Offerings
@@ -89,10 +94,10 @@ insert into courseoffering_offeredin values ( 76543,
 -- =========================
 -- 7. Grades from previous quarter
 -- =========================
-insert into took_courses values ( '12345',
+insert into took_courses values ( '1234567',
                                   56789,
                                   'B' );  -- CS130
-insert into took_courses values ( '12345',
+insert into took_courses values ( '1468222',
                                   76543,
                                   'A' );  -- CS026
 

@@ -51,8 +51,7 @@ insert into course values ( 'CS130',
                             'Data Structures' );
 insert into course values ( 'CS026',
                             'Intro to CS' );
-insert into course values ( 'CS699',
-                            'AI for education' );
+
 -- =========================
 -- 5. Quarters
 -- =========================
@@ -61,6 +60,11 @@ insert into quarter values ( 1,
                              'Winter',
                              date '2025-01-10',
                              date '2025-03-20' );
+insert into quarter values ( 2,
+                             2025,
+                             'Spring',
+                             date '2025-03-21',
+                             date '2025-06-20' );
 
 -- =========================
 -- 6. Offerings
@@ -90,18 +94,13 @@ insert into courseoffering_offeredin values ( 76543,
 -- =========================
 -- 7. Grades from previous quarter
 -- =========================
-insert into took_courses values ( '1234567',
-                                  56789,
-                                  'B' );  -- CS130
-insert into took_courses values ( '1234567',
-                                  76543,
-                                  'A' );  -- CS026
+
 
 -- added by skanda for enrolled table..., from chat
 -- Add current enrollments for testing
 INSERT INTO enrolled VALUES ('1234567', 56789);  -- Enroll Alfred in CS130
 INSERT INTO enrolled VALUES ('1234567', 76543);  -- Enroll Alfred in CS026
-INSERT INTO enrolled VALUES ('1234567', 56789);  -- Enroll Billy in CS130
+INSERT INTO enrolled VALUES ('1468222', 56789);  -- Enroll Billy in CS130
 
 -- Update enrollment counts
 UPDATE courseoffering_offeredin SET act_enrolled = 2 WHERE enrollment_id = 56789;  -- CS130 has 2 students
@@ -113,8 +112,6 @@ select *
   from student;
 select *
   from courseoffering_offeredin;
-select *
-  from took_courses;
 
-commit;
- 
+
+ commit;

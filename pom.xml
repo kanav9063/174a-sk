@@ -24,6 +24,11 @@
             <artifactId>oraclepki</artifactId>
             <version>23.7.0.25.01</version>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version>
+        </dependency>
     </dependencies>
 
     <build>

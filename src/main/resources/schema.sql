@@ -33,11 +33,11 @@ create table major_managedby (
 
 /* ---------- 3. Student ---------- */
 create table student (
-   perm           char(7) primary key,
+   perm           char(5) primary key,
    name           varchar2(80) not null,
-   address        varchar2(200),
-   pin            char(4) default '0000' not null check ( regexp_like ( pin,
-                                                             '^\d{4}$' ) ),
+   address        varchar2(400),
+   pin            char(5) default '00000' not null check ( regexp_like ( pin,
+                                                             '^\d{5}$' ) ),
    majorname      varchar2(100) not null,
    departmentname varchar2(100) not null,
    foreign key ( majorname )
@@ -76,15 +76,15 @@ create table slot (
 
 /* ---------- 6. Course ---------- */
 create table course (
-   cno   varchar2(7) primary key check ( regexp_like ( cno,
+   cno   varchar2(10) primary key check ( regexp_like ( cno,
                                                      '^[A-Za-z]{2,4}[0-9]{1,3}$' ) ),
-   title varchar2(100) not null
+   title varchar2(200) not null
 );
 
 /* ---------- 7. Prerequisites ---------- */
 create table prerequisites (
-   cid varchar2(7),
-   pid varchar2(7),
+   cid varchar2(10),
+   pid varchar2(10),
    primary key ( cid,
                  pid ),
    foreign key ( cid )
@@ -96,7 +96,7 @@ create table prerequisites (
 /* ---------- 8. Course Offering (per quarter) ---------- */
 create table courseoffering_offeredin (
    enrollment_id  number primary key,
-   cno            varchar2(7) not null,
+   cno            varchar2(10) not null,
    quarter_id     number not null,
    act_enrolled   number default 0,
    max_enrollment number not null,
@@ -113,7 +113,7 @@ create table courseoffering_offeredin (
 
 /* ---------- 9. Enrolled (current-quarter) ---------- */
 create table enrolled (
-   perm          char(7) not null,
+   perm          char(5) not null,
    enrollment_id number not null,
    primary key ( perm,
                  enrollment_id ),
@@ -125,7 +125,7 @@ create table enrolled (
 
 /* ---------- 10. Took_Courses (past grades) ---------- */
 create table took_courses (
-   perm          char(7) not null,
+   perm          char(5) not null,
    enrollment_id number not null,
    grade         varchar2(2) check ( grade in ( 'A+',
                                         'A',
@@ -149,7 +149,7 @@ create table took_courses (
 /* ---------- 11. Mandatory courses per major ---------- */
 create table mandatory (
    majorname varchar2(100) not null,
-   cno       varchar2(7) not null,
+   cno       varchar2(10) not null,
    primary key ( majorname,
                  cno ),
    foreign key ( majorname )
@@ -161,7 +161,7 @@ create table mandatory (
 /* ---------- 12. Elective courses per major ---------- */
 create table elective (
    majorname varchar2(100) not null,
-   cno       varchar2(7) not null,
+   cno       varchar2(10) not null,
    primary key ( majorname,
                  cno ),
    foreign key ( majorname )

@@ -1,7 +1,8 @@
 {
     "enrollment_id": 56789,
+    "yr_qtr": "25W",
     "grades": [
-      { "perm": "1234567", "grade": "F" },
-      { "perm": "1468222", "grade": "C" }
+      { "perm": "12345", "grade": "A" },
+      { "perm": "37642", "grade": "C+" }
     ]
   }

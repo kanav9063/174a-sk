@@ -94,13 +94,18 @@ insert into courseoffering_offeredin values ( 76543,
 -- =========================
 -- 7. Grades from previous quarter
 -- =========================
-
+insert into took_courses values ( '1234567',
+                                  56789,
+                                  'B' );  -- CS130
+insert into took_courses values ( '1468222',
+                                  76543,
+                                  'A' );  -- CS026
 
 -- added by skanda for enrolled table..., from chat
 -- Add current enrollments for testing
-INSERT INTO enrolled VALUES ('1234567', 56789);  -- Enroll Alfred in CS130
-INSERT INTO enrolled VALUES ('1234567', 76543);  -- Enroll Alfred in CS026
-INSERT INTO enrolled VALUES ('1468222', 56789);  -- Enroll Billy in CS130
+INSERT INTO enrolled VALUES ('12345', 56789);  -- Enroll Alfred in CS130
+INSERT INTO enrolled VALUES ('12345', 76543);  -- Enroll Alfred in CS026
+INSERT INTO enrolled VALUES ('14682', 56789);  -- Enroll Billy in CS130
 
 -- Update enrollment counts
 UPDATE courseoffering_offeredin SET act_enrolled = 2 WHERE enrollment_id = 56789;  -- CS130 has 2 students
@@ -112,6 +117,7 @@ select *
   from student;
 select *
   from courseoffering_offeredin;
+select *
+  from took_courses;
 
-
- commit;
+ 

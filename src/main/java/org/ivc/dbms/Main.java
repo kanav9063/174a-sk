@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
+import org.ivc.interfaces.RegistrarInterface;
 
 /**
  * Application entry point: opens JDBC connection, calls DatabaseManager, then
@@ -38,17 +39,14 @@ public class Main {
 
             // 5) Create your manager and call its methods
             DatabaseManager db = new DatabaseManager(conn);
-            db.listAllStudents();                     // print students
-            // boolean ok = db.addCourse("14682", "CS130");  // try enroll
-            // System.out.println("addCourse returned: " + ok);
-            // boolean test_delete = db.dropCourse("14682", "CS130");  // trying delete
-            // System.out.println("dropCourse returned: " + test_delete);
-            //  db.listAllCourses("1234567");
-            // db.listPrevQuarterGrades("1234567");
-            // boolean ok = db.enterGradesFromFile("grades.json");
-            // System.out.println("enterGradesFromFile returned: " + ok);
-            db.requestTranscript("1234567");
-            // System.out.println("listCurrentCourses returned: " + currClasses);
+           
+            // db.listCurrentCourses("38567");
+            // db.requestTranscript("12345");
+            // db.listPrevQuarterGrades("12345");
+            // db.enterGradesFromFile("grades.json");
+            // db.generateGradeMailers("24F");
+            RegistrarInterface registrar = new RegistrarInterface(db);
+            registrar.start();
 
 
 

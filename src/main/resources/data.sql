@@ -1,440 +1,224 @@
--- =========================
--- 1. Clean start
--- =========================
-delete from scheduled_at;
-delete from took_courses;
-delete from enrolled;
-delete from courseoffering_offeredin;
-delete from prerequisites;
-delete from mandatory;
-delete from elective;
-delete from student;
-delete from major_managedby;
-delete from department;
-delete from course;
-delete from slot;
-delete from quarter;
+-- ====================================================
+-- 0. Drop existing tables in reverse-dependency order
+-- ====================================================
+DROP TABLE takes_courses           CASCADE CONSTRAINTS;
+DROP TABLE courseoffering_offeredin CASCADE CONSTRAINTS;
+DROP TABLE prerequisites          CASCADE CONSTRAINTS;
+DROP TABLE mandatory              CASCADE CONSTRAINTS;
+DROP TABLE elective               CASCADE CONSTRAINTS;
+DROP TABLE course                 CASCADE CONSTRAINTS;
+DROP TABLE student                CASCADE CONSTRAINTS;
+DROP TABLE major_managedby        CASCADE CONSTRAINTS;
+DROP TABLE department             CASCADE CONSTRAINTS;
 
--- =========================
--- 2. Departments + Majors
--- =========================
-insert into department values ( 'CS' );
-insert into department values ( 'ECE' );
+-- ====================================================
+-- 1. Departments
+-- ====================================================
+INSERT INTO department(departmentname) VALUES ('CS');
+INSERT INTO department(departmentname) VALUES ('ECE');
 
-insert into major_managedby values ( 'CS',
-                                     'CS',
-                                     5 );
-insert into major_managedby values ( 'ECE',
-                                     'ECE',
-                                     5 );
+-- ====================================================
+-- 2. Majors
+-- ====================================================
+INSERT INTO major_managedby(majorname,departmentname,electivecount)
+  VALUES ('CS',  'CS',  5);
+INSERT INTO major_managedby(majorname,departmentname,electivecount)
+  VALUES ('ECE', 'ECE', 5);
 
--- =========================
+-- ====================================================
 -- 3. Students
--- =========================
-insert into student values ( '12345',
-                             'Alfred Hitchcock',
-                             '6667 El Colegio #40',
-                             '12345',
-                             'CS',
-                             'CS' );
-insert into student values ( '14682',
-                             'Billy Clinton',
-                             '5777 Hollister',
-                             '14682',
-                             'ECE',
-                             'ECE' );
-insert into student values ( '37642',
-                             'Cindy Laugher',
-                             '7000 Hollister',
-                             '37642',
-                             'CS',
-                             'CS' );
-insert into student values ( '85821',
-                             'David Copperfill',
-                             '1357 State St',
-                             '85821',
-                             'CS',
-                             'CS' );
-insert into student values ( '38567',
-                             'Elizabeth Sailor',
-                             '4321 State St',
-                             '38567',
-                             'ECE',
-                             'ECE' );
-insert into student values ( '81934',
-                             'Fatal Castro',
-                             '3756 La Cumbre Plaza',
-                             '81934',
-                             'CS',
-                             'CS' );
-insert into student values ( '98246',
-                             'George Brush',
-                             '5346 Foothill Av',
-                             '98246',
-                             'CS',
-                             'CS' );
-insert into student values ( '35328',
-                             'Hurryson Ford',
-                             '678 State St',
-                             '35328',
-                             'ECE',
-                             'ECE' );
-insert into student values ( '84713',
-                             'Ivan Lendme',
-                             '1235 Johnson Dr',
-                             '84713',
-                             'ECE',
-                             'ECE' );
-insert into student values ( '36912',
-                             'Joe Pepsi',
-                             '3210 State St',
-                             '36912',
-                             'CS',
-                             'CS' );
-insert into student values ( '46590',
-                             'Kelvin Coster',
-                             'Santa Cruz #3579',
-                             '46590',
-                             'CS',
-                             'CS' );
-insert into student values ( '91734',
-                             'Li Kung',
-                             '2 People''s Rd Beijing',
-                             '91734',
-                             'ECE',
-                             'ECE' );
-insert into student values ( '73521',
-                             'Magic Jordon',
-                             '3852 Court Rd',
-                             '73521',
-                             'CS',
-                             'CS' );
-insert into student values ( '53540',
-                             'Nam-hoi Chung',
-                             '1997 People''s St HK',
-                             '53540',
-                             'CS',
-                             'CS' );
-insert into student values ( '82452',
-                             'Olive Stoner',
-                             '6689 El Colegio #151',
-                             '82452',
-                             'ECE',
-                             'ECE' );
-insert into student values ( '18221',
-                             'Pit Wilson',
-                             '911 State St',
-                             '18221',
-                             'ECE',
-                             'ECE' );
+-- ====================================================
+INSERT INTO student(perm_num,name,address,pin,majorname,departmentname) VALUES
+('12345','Alfred Hitchcock','6667 El Colegio #40','12345','CS','CS'),
+('14682','Billy Clinton','5777 Hollister','14682','ECE','ECE'),
+('37642','Cindy Laugher','7000 Hollister','37642','CS','CS'),
+('85821','David Copperfill','1357 State St','85821','CS','CS'),
+('38567','Elizabeth Sailor','4321 State St','38567','ECE','ECE'),
+('81934','Fatal Castro','3756 La Cumbre Plaza','81934','CS','CS'),
+('98246','George Brush','5346 Foothill Av','98246','CS','CS'),
+('35328','Hurryson Ford','678 State St','35328','ECE','ECE'),
+('84713','Ivan Lendme','1235 Johnson Dr','84713','ECE','ECE'),
+('36912','Joe Pepsi','3210 State St','36912','CS','CS'),
+('46590','Kelvin Coster','Santa Cruz #3579','46590','CS','CS'),
+('91734','Li Kung','2 People''s Rd Beijing','91734','ECE','ECE'),
+('73521','Magic Jordon','3852 Court Rd','73521','CS','CS'),
+('53540','Nam-hoi Chung','1997 People''s St HK','53540','CS','CS'),
+('82452','Olive Stoner','6689 El Colegio #151','82452','ECE','ECE'),
+('18221','Pit Wilson','911 State St','18221','ECE','ECE');
 
--- =========================
+-- ====================================================
 -- 4. Courses
--- =========================
-insert into course values ( 'CS174',
-                            'Advanced Databases' );
-insert into course values ( 'CS170',
-                            'Algorithms' );
-insert into course values ( 'CS160',
-                            'Operating Systems' );
-insert into course values ( 'CS154',
-                            'Computer Architecture' );
-insert into course values ( 'CS130',
-                            'Data Structures' );
-insert into course values ( 'CS026',
-                            'Intro to CS' );
-insert into course values ( 'CS010',
-                            'Intro to Programming' );
-insert into course values ( 'EC154',
-                            'Digital Circuits' );
-insert into course values ( 'EC152',
-                            'Microprocessors' );
-insert into course values ( 'EC140',
-                            'Signals & Systems' );
-insert into course values ( 'EC015',
-                            'Intro to ECE' );
-insert into course values ( 'EC010',
-                            'ECE Fundamentals' );
+-- ====================================================
+INSERT INTO course(cno,en_code) VALUES
+('CS174','12345'),
+('CS170','54321'),
+('CS160','41725'),
+('CS026','76543'),
+('EC154','93156'),
+('EC140','19023'),
+('EC015','71631'),
+('CS154','32165'),
+('CS130','56789'),
+('EC152','91823'),
+('CS010','81623'),
+('EC010','82612');
 
--- =========================
--- 5. Quarters
--- =========================
-insert into quarter values ( 1,
-                             2025,
-                             'Spring',
-                             date '2025-03-24',
-                             date '2025-06-10' );
-insert into quarter values ( 2,
-                             2025,
-                             'Winter',
-                             date '2025-01-10',
-                             date '2025-03-20' );
-insert into quarter values ( 3,
-                             2024,
-                             'Fall',
-                             date '2024-09-20',
-                             date '2024-12-10' );
+-- ====================================================
+-- 5. Prerequisites
+-- ====================================================
+INSERT INTO prerequisites(cid,pid) VALUES
+('CS174','CS130'),
+('CS174','CS026'),
+('CS170','CS130'),
+('CS170','CS154'),
+('CS160','CS026'),
+('EC154','CS026'),
+('EC154','EC152');
 
--- =========================
--- 6. Course Offerings (Spring 2025)
--- =========================
-insert into courseoffering_offeredin values ( 10001,
-                                              'CS174',
-                                              1,
-                                              0,
-                                              8,
-                                              'Venus',
-                                              null,
-                                              'Psycho',
-                                              '1132',
-                                              'TR10-12' );
-insert into courseoffering_offeredin values ( 10002,
-                                              'CS170',
-                                              1,
-                                              0,
-                                              8,
-                                              'Jupiter',
-                                              null,
-                                              'English',
-                                              '1124',
-                                              'MWF10-11' );
-insert into courseoffering_offeredin values ( 10003,
-                                              'CS160',
-                                              1,
-                                              0,
-                                              8,
-                                              'Mercury',
-                                              null,
-                                              'Engr',
-                                              '1132',
-                                              'MWF2-3' );
-insert into courseoffering_offeredin values ( 10004,
-                                              'CS026',
-                                              1,
-                                              0,
-                                              8,
-                                              'Mars',
-                                              null,
-                                              'Bio',
-                                              '2222',
-                                              'MWF2-3' );
-insert into courseoffering_offeredin values ( 10005,
-                                              'EC154',
-                                              1,
-                                              0,
-                                              7,
-                                              'Saturn',
-                                              null,
-                                              'Maths',
-                                              '3333',
-                                              'T3-5' );
-insert into courseoffering_offeredin values ( 10006,
-                                              'EC140',
-                                              1,
-                                              0,
-                                              10,
-                                              'Gold',
-                                              null,
-                                              'Chem',
-                                              '1234',
-                                              'TR1-3' );
-insert into courseoffering_offeredin values ( 10007,
-                                              'EC015',
-                                              1,
-                                              0,
-                                              8,
-                                              'Silver',
-                                              null,
-                                              'Engr',
-                                              '2116',
-                                              'MW11-1' );
+-- ====================================================
+-- 6. Course Offerings (per quarter)
+-- ====================================================
+-- Spring 2025 (25S)
+INSERT INTO courseoffering_offeredin(enrollment_id,cno,yr_qtr,max_enrollment,professor_name,time_location) VALUES
+(12345,'CS174','25S',8, 'Venus', 'TR10-12 Psycho 1132'),
+(54321,'CS170','25S',8, 'Jupiter','MWF10-11 English 1124'),
+(41725,'CS160','25S',8, 'Mercury','MWF2-3 Engr 1132'),
+(76543,'CS026','25S',8, 'Mars',   'MWF2-3 Bio 2222'),
+(93156,'EC154','25S',7, 'Saturn', 'T3-5 Maths 3333'),
+(19023,'EC140','25S',10,'Gold',   'TR1-3 Chem 1234'),
+(71631,'EC015','25S',8, 'Silver', 'MW11-1 Engr 2116');
 
--- =========================
--- 7. Course Offerings (Winter 2025)
--- =========================
-insert into courseoffering_offeredin values ( 20001,
-                                              'CS170',
-                                              2,
-                                              0,
-                                              18,
-                                              'Copper',
-                                              null,
-                                              'English',
-                                              '1124',
-                                              'MWF10-11' );
-insert into courseoffering_offeredin values ( 20002,
-                                              'CS160',
-                                              2,
-                                              0,
-                                              15,
-                                              'Iron',
-                                              null,
-                                              'Engr',
-                                              '1132',
-                                              'MWF2-3' );
-insert into courseoffering_offeredin values ( 20003,
-                                              'CS154',
-                                              2,
-                                              0,
-                                              10,
-                                              'Tin',
-                                              null,
-                                              'Engr',
-                                              '2116',
-                                              'MF8-9' );
-insert into courseoffering_offeredin values ( 20004,
-                                              'CS130',
-                                              2,
-                                              0,
-                                              15,
-                                              'Star',
-                                              null,
-                                              'Chem',
-                                              '1111',
-                                              'TR2-4' );
-insert into courseoffering_offeredin values ( 20005,
-                                              'CS026',
-                                              2,
-                                              0,
-                                              15,
-                                              'Tin',
-                                              null,
-                                              'Bio',
-                                              '2222',
-                                              'MWF2-3' );
-insert into courseoffering_offeredin values ( 20006,
-                                              'EC154',
-                                              2,
-                                              0,
-                                              18,
-                                              'Saturn',
-                                              null,
-                                              'Maths',
-                                              '3333',
-                                              'T3-5' );
-insert into courseoffering_offeredin values ( 20007,
-                                              'EC152',
-                                              2,
-                                              0,
-                                              10,
-                                              'Gold',
-                                              null,
-                                              'Engr',
-                                              '3163',
-                                              'MW11-1' );
+-- Winter 2025 (25W)
+INSERT INTO courseoffering_offeredin(enrollment_id,cno,yr_qtr,max_enrollment,professor_name,time_location) VALUES
+(54321,'CS170','25W',18,'Copper','MWF10-11 English 1124'),
+(41725,'CS160','25W',15,'Iron',  'MWF2-3 Engr 1132'),
+(32165,'CS154','25W',10,'Tin',   'MF8-9 Engr 2116'),
+(56789,'CS130','25W',15,'Star',  'TR2-4 Chem 1111'),
+(76543,'CS026','25W',15,'Tin',   'MWF2-3 Bio 2222'),
+(93156,'EC154','25W',18,'Saturn','T3-5 Maths 3333'),
+(91823,'EC152','25W',10,'Gold',  'MW11-1 Engr 3163');
 
--- =========================
--- 8. Course Offerings (Fall 2024)
--- =========================
-insert into courseoffering_offeredin values ( 30001,
-                                              'CS170',
-                                              3,
-                                              0,
-                                              15,
-                                              'Copper',
-                                              null,
-                                              'English',
-                                              '1124',
-                                              'MWF10-11' );
-insert into courseoffering_offeredin values ( 30002,
-                                              'CS160',
-                                              3,
-                                              0,
-                                              10,
-                                              'Mercury',
-                                              null,
-                                              'Engr',
-                                              '1132',
-                                              'MWF2-3' );
-insert into courseoffering_offeredin values ( 30003,
-                                              'CS154',
-                                              3,
-                                              0,
-                                              10,
-                                              'Mars',
-                                              null,
-                                              'Engr',
-                                              '2116',
-                                              'MWF8-9' );
-insert into courseoffering_offeredin values ( 30004,
-                                              'CS130',
-                                              3,
-                                              0,
-                                              15,
-                                              'Jupiter',
-                                              null,
-                                              'Chem',
-                                              '1111',
-                                              'TR2-4' );
-insert into courseoffering_offeredin values ( 30005,
-                                              'CS026',
-                                              3,
-                                              0,
-                                              15,
-                                              'Tin',
-                                              null,
-                                              'Bio',
-                                              '2222',
-                                              'MWF2-3' );
-insert into courseoffering_offeredin values ( 30006,
-                                              'CS010',
-                                              3,
-                                              0,
-                                              10,
-                                              'Gold',
-                                              null,
-                                              'Chem',
-                                              '3333',
-                                              'MWR3-4' );
-insert into courseoffering_offeredin values ( 30007,
-                                              'EC154',
-                                              3,
-                                              0,
-                                              10,
-                                              'Silver',
-                                              null,
-                                              'Maths',
-                                              '3333',
-                                              'T3-5' );
-insert into courseoffering_offeredin values ( 30008,
-                                              'EC152',
-                                              3,
-                                              0,
-                                              10,
-                                              'Sun',
-                                              null,
-                                              'Engr',
-                                              '3163',
-                                              'MW11-1' );
-insert into courseoffering_offeredin values ( 30009,
-                                              'EC015',
-                                              3,
-                                              0,
-                                              15,
-                                              'Moon',
-                                              null,
-                                              'Engr',
-                                              '1124',
-                                              'TR2-4' );
-insert into courseoffering_offeredin values ( 30010,
-                                              'EC010',
-                                              3,
-                                              0,
-                                              15,
-                                              'Earth',
-                                              null,
-                                              'Physics',
-                                              '4004',
-                                              'MWF8-9' );
+-- Fall 2024 (24F)
+INSERT INTO courseoffering_offeredin(enrollment_id,cno,yr_qtr,max_enrollment,professor_name,time_location) VALUES
+(54321,'CS170','24F',15,'Copper','MWF10-11 English 1124'),
+(41725,'CS160','24F',10,'Mercury','MWF2-3 Engr 1132'),
+(32165,'CS154','24F',10,'Mars',   'MF8-9 Engr 2116'),
+(56789,'CS130','24F',15,'Jupiter','TR2-4 Chem 1111'),
+(76543,'CS026','24F',15,'Tin',    'MWF2-3 Bio 2222'),
+(81623,'CS010','24F',10,'Gold',   'MWR3-4 Chem 3333'),
+(93156,'EC154','24F',10,'Silver', 'T3-5 Maths 3333'),
+(91823,'EC152','24F',10,'Sun',    'MW11-1 Engr 3163'),
+(71631,'EC015','24F',15,'Moon',   'TR2-4 Engr 1124'),
+(82612,'EC010','24F',15,'Earth',  'MWF8-9 Physics 4004');
 
--- =========================
--- 9. COMMIT
--- =========================
-commit;
+-- Summer 2024 (24S)
+INSERT INTO courseoffering_offeredin(enrollment_id,cno,yr_qtr,max_enrollment,professor_name,time_location) VALUES
+(56789,'CS130','24S',15,'Mercury','TR2-4 Chem 1111'),
+(76543,'CS026','24S',15,'Mars',   'MWF2-3 Bio 2222'),
+(81623,'CS010','24S',10,'Gold',   'MWR3-4 Chem 3333'),
+(91823,'EC152','24S',12,'Iron',   'MW11-1 Engr 3163'),
+(71631,'EC015','24S',15,'Moon',   'TR2-4 Engr 1124'),
+(82612,'EC010','24S',15,'Star',   'MWF8-9 Physics 4004');
 
-select *
-  from student;
-select *
-  from courseoffering_offeredin;
-select *
-  from enrolled;
+-- ====================================================
+-- 7. Takes_Courses (NULL = current, NOT NULL = past)
+-- ====================================================
+-- 7.1 Current (Spring 2025, 25S, grade=NULL)
+INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES
+('12345',54321,'25S',NULL),
+('12345',41725,'25S',NULL),
+('37642',93156,'25S',NULL),
+('37642',41725,'25S',NULL),
+('85821',12345,'25S',NULL),
+('85821',41725,'25S',NULL),
+('38567',12345,'25S',NULL),
+('38567',54321,'25S',NULL),
+('38567',41725,'25S',NULL),
+('81934',93156,'25S',NULL),
+('98246',41725,'25S',NULL),
+('98246',12345,'25S',NULL),
+('98246',54321,'25S',NULL),
+('98246',93156,'25S',NULL),
+('35328',12345,'25S',NULL),
+('53540',54321,'25S',NULL),
+('82452',93156,'25S',NULL),
+('18221',12345,'25S',NULL);
+
+-- 7.2 Past – Winter 2025 (25W) & Fall 2024 (24F) & Summer 2024 (24S)
+INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES
+-- Alfred Hitchcock
+('12345',32165,'25W','A'),
+('12345',56789,'25W','B'),
+('12345',93156,'25W','C'),
+('12345',76543,'24F','A'),
+('12345',81623,'24F','A'),
+('12345',91823,'24S','A'),
+('12345',71631,'24S','A'),
+('12345',82612,'24S','A'),
+-- Billy Clinton
+('14682',41725,'25W','B'),
+('14682',56789,'25W','B'),
+('14682',76543,'24F','B'),
+('14682',81623,'24F','A'),
+-- Cindy Laugher
+('37642',91823,'25W','C'),
+('37642',56789,'25W','B'),
+('37642',71631,'24F','B'),
+('37642',81623,'24F','A'),
+-- David Copperfill
+('85821',56789,'25W','C'),
+('85821',76543,'25W','A'),
+('85821',81623,'24F','A'),
+('85821',71631,'24F','B'),
+-- Elizabeth Sailor
+('38567',93156,'25W','C'),
+('38567',56789,'25W','A'),
+('38567',91823,'24F','B'),
+('38567',32165,'24F','B'),
+-- Fatal Castro
+('81934',93156,'25W','C'),
+('81934',56789,'25W','A'),
+('81934',76543,'24F','A'),
+('81934',91823,'24F','B'),
+-- George Brush
+('98246',91823,'25W','B'),
+('98246',32165,'24F','A'),
+('98246',56789,'24F','B'),
+('98246',76543,'24F','A'),
+-- Hurryson Ford
+('35328',56789,'24F','B'),
+('35328',76543,'24F','A'),
+-- Ivan Lendme
+('84713',76543,'25W','D'),
+('84713',71631,'24F','F'),
+('84713',81623,'24F','C'),
+-- Joe Pepsi  (none)
+-- Kelvin Coster
+('46590',76543,'25W','A'),
+-- Li Kung
+('91734',76543,'25W','A'),
+-- Magic Jordon
+('73521',76543,'25W','B'),
+-- Nam‑hoi Chung
+('53540',56789,'25W','C'),
+('53540',56789,'24F','C'),
+-- Olive Stoner
+('82452',91823,'25W','C'),
+('82452',76543,'25W','C'),
+-- Pit Wilson
+('18221',12345,'25W','B'),
+('18221',76543,'25W','B');
+
+-- ====================================================
+-- 8. Mandatory courses per major
+-- ====================================================
+INSERT INTO mandatory(majorname,cno) VALUES
+('CS','CS026'),('CS','CS130'),('CS','CS154'),('CS','CS160'),('CS','CS170'),
+('ECE','CS026'),('ECE','CS130'),('ECE','CS154'),('ECE','CS160'),('ECE','CS170');
+
+-- ====================================================
+-- 9. Elective courses per major
+-- ====================================================
+INSERT INTO elective(majorname,cno) VALUES
+('CS','CS010'),('CS','EC010'),('CS','EC015'),('CS','EC140'),('CS','EC152'),('CS','EC154'),('CS','CS174'),
+('ECE','CS010'),('ECE','EC010'),('ECE','EC015'),('ECE','EC140'),('ECE','EC152'),('ECE','EC154'),('ECE','CS174');

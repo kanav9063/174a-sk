@@ -1,4 +1,6 @@
 org/ivc/dbms/TestConnection.class
 org/ivc/dbms/Main.class
 org/ivc/dbms/DatabaseManager.class
+org/ivc/interfaces/RegistrarInterface.class
+org/ivc/interfaces/GoldInterface.class
 org/ivc/dbms/DButil.class

@@ -33,7 +33,7 @@ create table student (
    perm_num       char(5),
    name           varchar2(80),
    address        varchar2(400),
-   pin            char(5) default '00000',
+   pin            varchar2(64) default '00000',
    majorname      varchar2(100),
    departmentname varchar2(100),
    foreign key ( majorname )

@@ -1,5 +1,8 @@
 package org.ivc.dbms;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -17,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Encapsulates basic database operations for IVC, updated to match the final
@@ -673,6 +679,225 @@ public class DatabaseManager {
         }
         System.out.println("PIN changed successfully.");
         return true;
+    }
+
+    /**
+     * Enters grades for all students in a course from a JSON file.
+     * Expected JSON format - similar to slack:
+     * {
+     *   "enrollment_id": 56789,
+     *  "yr_qtr": "25W",
+     *   "grades": [
+     *     { "perm": "1234567", "grade": "B" },
+     *     { "perm": "1468222", "grade": "A" }
+     *   ]
+     * }
+     * 
+     * for correct usage make sure add the JSON library dependency to the pom.xml file. Add this inside the <dependencies> section
+     * <dependency>
+     * <groupId>org.json</groupId>
+     * <artifactId>json</artifactId>
+     * <version>20231013</version>
+     * </dependency>
+     * Then run mvn clean install to make sure the JSON library is included.
+     * do i need to add validation here for duplicate grades (ie if the same student shows up twice)
+     */
+    public boolean enterGradesFromFile(String filename) throws SQLException {
+        try {
+            StringBuilder jsonContent = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    jsonContent.append(line);
+                }
+            }
+            
+            JSONObject json = new JSONObject(jsonContent.toString());
+            JSONArray grades = json.getJSONArray("grades");
+            int enrollmentId = json.getInt("enrollment_id");
+            String yrQtr = json.getString("yr_qtr");
+            
+            String verifySql = 
+                "SELECT 1 FROM courseoffering_offeredin WHERE enrollment_id = ?";
+            
+            try (PreparedStatement ps = conn.prepareStatement(verifySql)) {
+                ps.setInt(1, enrollmentId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) {
+                        System.out.println("Error: Course offering " + enrollmentId + " not found.");
+                        return false;
+                    }
+                }
+            }
+            
+            int successCount = 0;
+            int failCount = 0;
+            
+            for (int i = 0; i < grades.length(); i++) {
+                JSONObject gradeEntry = grades.getJSONObject(i);
+                String perm = gradeEntry.getString("perm");
+                String grade = gradeEntry.getString("grade");
+                
+                if (!grade.matches("^[A-C][+-]?|D|F$")) {
+                    System.out.println("Invalid grade format for student " + perm + ": " + grade);
+                    failCount++;
+                    continue;
+                }
+                
+                String updateSql =
+                    "UPDATE takes_courses SET grade = ? WHERE perm_num = ? AND enrollment_id = ? AND yr_qtr = ?";
+                
+                try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
+                    ps.setString(1, grade);
+                    ps.setString(2, perm);
+                    ps.setInt(3, enrollmentId);
+                    ps.setString(4, yrQtr);
+                    int rows = ps.executeUpdate();
+                    if (rows > 0) {
+                        successCount++;
+                    } else {
+                        System.out.println("No record found for student " + perm + " in enrollment " + enrollmentId + " for quarter " + yrQtr);
+                        failCount++;
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Error updating grade for student " + perm + ": " + e.getMessage());
+                    failCount++;
+                }
+            }
+            
+            System.out.println("Grade entry complete for enrollment " + enrollmentId + " (" + yrQtr + "):");
+            System.out.println("Successfully updated: " + successCount + " grades");
+            System.out.println("Failed to update: " + failCount + " grades");
+            
+            return failCount == 0;
+            
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            System.out.println("Error processing JSON: " + e.getMessage());
+            return false;
+        }
+    }
+
+     /**
+     * request transcript, registrar feature
+     */
+    public void requestTranscript(String perm) throws SQLException {
+        String sql = 
+            "SELECT co.cno, c.en_code, co.max_enrollment, " +
+            "       co.professor_name, co.time_location, tc.grade, co.yr_qtr " +
+            "FROM takes_courses tc, courseoffering_offeredin co, course c " +
+            "WHERE tc.enrollment_id = co.enrollment_id " +
+            "AND tc.yr_qtr = co.yr_qtr " +
+            "AND co.cno = c.cno " +
+            "AND tc.perm_num = ? " +
+            "AND tc.grade IS NOT NULL " +
+            "ORDER BY co.yr_qtr DESC, co.cno";  //look into changing to true chronological ordering
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, perm);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                System.out.println("Transcript for Student " + perm + ":");
+                System.out.println("Quarter | Course | Enrollment Id        | Grade | Professor        | Time/Location");
+                System.out.println("--------|--------|----------------------|-------|------------------|---------------");
+                
+                boolean hasResults = false;
+                while (rs.next()) {
+                    hasResults = true;
+                    String yrQtr = rs.getString("yr_qtr");
+                    String cno = rs.getString("cno");
+                    String title = rs.getString("en_code");
+                    String grade = rs.getString("grade");
+                    String professor = rs.getString("professor_name") != null ? 
+                                     rs.getString("professor_name") : "TBA";
+                    String timeLocation = rs.getString("time_location") != null ? 
+                                        rs.getString("time_location") : "TBA";
+                    
+                    System.out.printf("%-7s | %-6s | %-20s | %-5s | %-16s | %s%n",
+                        yrQtr, cno, title, grade, professor.trim(), timeLocation);
+                }
+                
+                if (!hasResults) {
+                    System.out.println("No past courses found.");
+                }
+            }
+        }
+    }
+
+
+     /**
+     * Generates grade mailers for all students in a given quarter, registrar feature
+     */
+    public void generateGradeMailers(String yrQtr) throws SQLException {
+        String sql = 
+            "SELECT DISTINCT s.perm_num, s.name, s.majorname " +
+            "FROM student s, takes_courses tc " +
+            "WHERE s.perm_num = tc.perm_num " +
+            "AND tc.yr_qtr = ? " +
+            "AND tc.grade IS NOT NULL " +
+            "ORDER BY s.perm_num";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, yrQtr);
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                boolean hasStudents = false;
+                
+                while (rs.next()) {
+                    hasStudents = true;
+                    String perm = rs.getString("perm_num");
+                    String name = rs.getString("name");
+                    String major = rs.getString("majorname");
+                    
+                    System.out.println("\n" + "=".repeat(60));
+                    System.out.println("GRADE MAILER - " + yrQtr);
+                    System.out.println("=".repeat(60));
+                    System.out.printf("Student: %s (%s)%n", name, perm);
+                    System.out.printf("Major: %s%n", major);
+                    System.out.println("-".repeat(60));
+                    
+                    String courseSql = 
+                        "SELECT tc.perm_num, s.name, co.cno, c.en_code, tc.grade, co.professor_name, co.yr_qtr " +
+                        "FROM takes_courses tc, student s, courseoffering_offeredin co, course c " +
+                        "WHERE tc.perm_num = s.perm_num " +
+                        "AND tc.enrollment_id = co.enrollment_id " +
+                        "AND tc.yr_qtr = co.yr_qtr " +
+                        "AND co.cno = c.cno " +
+                        "AND tc.perm_num = ? " +
+                        "AND tc.yr_qtr = ? " +
+                        "ORDER BY co.cno";
+                    
+                    try (PreparedStatement psCourses = conn.prepareStatement(courseSql)) {
+                        psCourses.setString(1, perm);
+                        psCourses.setString(2, yrQtr);
+                        
+                        try (ResultSet rsCourses = psCourses.executeQuery()) {
+                            System.out.println("Course | Enrollment Id   | Professor        | Grade");
+                            System.out.println("-------|-----------------|------------------|-------");
+                            
+                            while (rsCourses.next()) {
+                                String cno = rsCourses.getString("cno");
+                                String title = rsCourses.getString("en_code");
+                                String professor = rsCourses.getString("professor_name") != null ? 
+                                                 rsCourses.getString("professor_name") : "TBA";
+                                String grade = rsCourses.getString("grade");
+                                
+                                System.out.printf("%-6s | %-15s | %-16s | %s%n",
+                                    cno, title, professor.trim(), grade);
+                            }
+                        }
+                    }
+                    
+                    System.out.println("=".repeat(60) + "\n");
+                }
+                
+                if (!hasStudents) {
+                    System.out.println("No students found with grades for quarter " + yrQtr);
+                }
+            }
+        }
     }
 
 }

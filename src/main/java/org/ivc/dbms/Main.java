@@ -4,6 +4,12 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.Scanner;
+
+import org.ivc.interfaces.RegistrarInterface;
+import org.ivc.interfaces.GoldInterface;
+
+
 
 /**
  * Application entry point: opens JDBC connection, calls DatabaseManager
@@ -13,7 +19,7 @@ public class Main {
 
     // 1) Your database alias (from Oracle Cloud) + wallet path
     private static final String DB_ALIAS = "cs174adb_low";
-    private static final String WALLET_DIR = "/Users/quicktech/Desktop/cs174a-project/wallet_CS174ADB";
+    private static final String WALLET_DIR = "wallet_CS174ADB";
 
     // 2) Build the JDBC URL using alias + TNS_ADMIN
     private static final String DB_URL
@@ -72,24 +78,24 @@ public class Main {
             // // ... existing code ...
 
             // 8. Test PIN verification
-            System.out.println("\n=== Test PIN Verification (Alfred, 12345) ===");
-            // Scenario 1: Correct PIN (initial PIN is '00000', assuming it's hashed in your DB)
-            // If your DB has plain text '00000', this will fail until you hash it.
-            // To test with unhashed PINs in DB: comment out hashPin in verifyPin and compare directly.
-            db.verifyPin("12345", "12345"); // Should be true if DB has HASH    of "12345"
-            // Scenario 2: Incorrect PIN
-            db.verifyPin("12345", "wrong"); // Should be false
+            // System.out.println("\n=== Test PIN Verification (Alfred, 12345) ===");
+            // // Scenario 1: Correct PIN (initial PIN is '00000', assuming it's hashed in your DB)
+            // // If your DB has plain text '00000', this will fail until you hash it.
+            // // To test with unhashed PINs in DB: comment out hashPin in verifyPin and compare directly.
+            // db.verifyPin("12345", "12345"); // Should be true if DB has HASH    of "12345"
+            // // Scenario 2: Incorrect PIN
+            // db.verifyPin("12345", "wrong"); // Should be false
 
-            // 9. Test Set PIN
-            System.out.println("\n=== Test Set PIN (Alfred, 12345) ===");
-            // Scenario 1: Correct old PIN, set new PIN
-            db.setPin("12345", "12345", "54321"); // Changes PIN to HASH of "54321"
-            // Scenario 2: Verify new PIN
-            db.verifyPin("12345", "54321"); // Should be true
-            // Scenario 3: Incorrect old PIN
-            db.setPin("12345", "wrong", "11111"); // Should fail
-            // Scenario 4: Restore original PIN for consistency in other tests
-            db.setPin("12345", "54321", "12345");
+            // // 9. Test Set PIN
+            // System.out.println("\n=== Test Set PIN (Alfred, 12345) ===");
+            // // Scenario 1: Correct old PIN, set new PIN
+            // db.setPin("12345", "12345", "54321"); // Changes PIN to HASH of "54321"
+            // // Scenario 2: Verify new PIN
+            // db.verifyPin("12345", "54321"); // Should be true
+            // // Scenario 3: Incorrect old PIN
+            // db.setPin("12345", "wrong", "11111"); // Should fail
+            // // Scenario 4: Restore original PIN for consistency in other tests
+            // db.setPin("12345", "54321", "12345");
             // ... existing code ...
 
             // // 9. Try to drop Alfred's last course (should fail)
@@ -102,7 +108,50 @@ public class Main {
             // System.out.println("\n=== Billy's Previous Quarter Grades ===");
             // db.listPreviousQuarterGrades("14682");
             // clean up
-            db.close();
+            // RegistrarInterface registrar = new RegistrarInterface(db);
+            // registrar.start();
+            // GoldInterface gold = new GoldInterface(db);
+            // gold.start();
+
+
+            //move this, temporary for now
+            Scanner scanner = new Scanner(System.in);
+
+            while (true) {
+                System.out.println("\nWelcome to the Student Registration System");
+                System.out.println("Please select interface:");
+                System.out.println("1. Student Interface (Gold)");
+                System.out.println("2. Registrar Interface");
+                System.out.println("3. Exit");
+                
+                System.out.print("\nSelect interface (1-3): ");
+                String choice = scanner.nextLine().trim();
+                
+                switch (choice) {
+                    case "1":
+                        System.out.println("\nStarting Student Interface...");
+                        GoldInterface goldInterface = new GoldInterface(db);
+                        goldInterface.start();
+                        break;
+                        
+                    case "2":
+                        System.out.println("\nStarting Registrar Interface...");
+                        RegistrarInterface registrarInterface = new RegistrarInterface(db);
+                        registrarInterface.start();
+                        break;
+                        
+                    case "3":
+                        System.out.println("Goodbye!");
+                        scanner.close();
+                        db.close();
+                        return;
+                        
+                    default:
+                        System.out.println("Invalid choice. Please select 1, 2, or 3.");
+                }
+            }
+
+            // db.close(); commenting for now
         } catch (SQLException e) {
             System.out.println(" SQL error:");
             e.printStackTrace();

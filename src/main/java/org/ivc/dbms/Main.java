@@ -6,8 +6,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * Application entry point: opens JDBC connection, calls DatabaseManager, then
- * closes.
+ * Application entry point: opens JDBC connection, calls DatabaseManager
+ * methods, then closes.
  */
 public class Main {
 
@@ -24,67 +24,87 @@ public class Main {
     private static final String DB_PASSWORD = "Helloworld@1234";
 
     public static void main(String[] args) {
+        // set up SSL/TLS properties for Oracle wallet
         Properties props = new Properties();
         props.setProperty("user", DB_USER);
         props.setProperty("password", DB_PASSWORD);
         props.setProperty("oracle.net.ssl_server_dn_match", "true");
 
         System.out.println("Connecting to: " + DB_URL);
-
         try (Connection conn = DriverManager.getConnection(DB_URL, props)) {
-            System.out.println("✅ Connection established!");
+            System.out.println("Connection established!");
 
             DatabaseManager db = new DatabaseManager(conn);
 
-            // 1. List all students
-            System.out.println("\n=== All Students ===");
-            db.listAllStudents();
+            // // 1. List all students
+            // System.out.println("\n=== All Students ===");
+            // db.listAllStudents();
+            // // 2. Enroll Alfred in CS174 and CS026
+            // System.out.println("\n=== Enroll Alfred (12345) in CS174 and CS026 ===");
+            // db.addCourse("12345", "CS174");
+            // db.addCourse("12345", "CS026");
+            // System.out.println("\n=== Alfred's Current Courses ===");
+            // db.listCurrentCourses("12345");
+            // // 3. Try duplicate enrollment (should fail)
+            // System.out.println("\n=== Try duplicate enrollment: Alfred → CS170 again ===");
+            // db.addCourse("12345", "CS170");
+            // // 4. Drop Alfred from CS174 and CS026
+            // System.out.println("\n=== Alfred drops CS174 ===");
+            // db.dropCourse("12345", "CS174");
+            // System.out.println("\n=== Alfred drops CS026 ===");
+            // db.dropCourse("12345", "CS026");
+            // System.out.println("\n=== Alfred's Current Courses ===");
+            // db.listCurrentCourses("12345");
+            // 5. List the previous quarter grades for Alfred
+            // System.out.println("\n=== Billy's Previous Quarter Grades ===");
+            // db.listPreviousQuarterGrades("14682");
+            // // 6. Check requirements for Billy
+            // System.out.println("\n=== Billy's Requirements Check ===");
+            // db.requirementsCheck("14682");
+            // // 7. Make a plan for Billy
+            // System.out.println("\n=== Billy's Study Plan ===");
+            // db.makePlan("14682");
+            // ... existing code ...
+            // System.out.println("\n=== Joe Pepsi's Requirements Check ===");
+            // db.requirementsCheck("36912");
+            // System.out.println("\n=== Joe Pepsi's Study Plan ===");
+            // db.makePlan("36912");
+            // // ... existing code ...
 
-            // 2. Enroll Alfred in CS130 and CS026
-            System.out.println("\n=== Enroll Alfred (1234567) in CS130 and CS026 ===");
-            db.addCourse("1234567", "CS130");
-            db.addCourse("1234567", "CS026");
+            // 8. Test PIN verification
+            System.out.println("\n=== Test PIN Verification (Alfred, 12345) ===");
+            // Scenario 1: Correct PIN (initial PIN is '00000', assuming it's hashed in your DB)
+            // If your DB has plain text '00000', this will fail until you hash it.
+            // To test with unhashed PINs in DB: comment out hashPin in verifyPin and compare directly.
+            db.verifyPin("12345", "12345"); // Should be true if DB has HASH    of "12345"
+            // Scenario 2: Incorrect PIN
+            db.verifyPin("12345", "wrong"); // Should be false
 
-            // 3. Enroll Billy in CS026
-            System.out.println("\n=== Enroll Billy (1468222) in CS026 ===");
-            db.addCourse("1468222", "CS026");
+            // 9. Test Set PIN
+            System.out.println("\n=== Test Set PIN (Alfred, 12345) ===");
+            // Scenario 1: Correct old PIN, set new PIN
+            db.setPin("12345", "12345", "54321"); // Changes PIN to HASH of "54321"
+            // Scenario 2: Verify new PIN
+            db.verifyPin("12345", "54321"); // Should be true
+            // Scenario 3: Incorrect old PIN
+            db.setPin("12345", "wrong", "11111"); // Should fail
+            // Scenario 4: Restore original PIN for consistency in other tests
+            db.setPin("12345", "54321", "12345");
+            // ... existing code ...
 
-            // 4. Try duplicate enrollment (should fail)
-            System.out.println("\n=== Try duplicate enrollment (Alfred → CS130 again) ===");
-            db.addCourse("1234567", "CS130");
-
-            // 5. List current courses for Alfred
-            System.out.println("\n=== Alfred's Current Courses ===");
-            db.listCurrentCourses("1234567");
-
-            // 6. Drop Alfred from CS130
-            System.out.println("\n=== Alfred drops CS130 ===");
-            db.dropCourse("1234567", "CS130");
-
-            // 7. List current courses for Alfred after drop
-            System.out.println("\n=== Alfred's Current Courses (After Drop) ===");
-            db.listCurrentCourses("1234567");
-
-            // 8. List previous quarter grades for Alfred
-            System.out.println("\n=== Alfred's Previous Quarter Grades ===");
-            db.listPreviousQuarterGrades("1234567");
-
-            // 9. Try to drop Alfred's last course (should fail)
-            System.out.println("\n=== Try to drop Alfred's last course (should fail) ===");
-            db.dropCourse("1234567", "CS026");
-
-            // 10. List current courses for Billy
-            System.out.println("\n=== Billy's Current Courses ===");
-            db.listCurrentCourses("1468222");
-
-            // 11. List previous quarter grades for Billy
-            System.out.println("\n=== Billy's Previous Quarter Grades ===");
-            db.listPreviousQuarterGrades("1468222");
-
+            // // 9. Try to drop Alfred's last course (should fail)
+            // System.out.println("\n=== Try to drop Alfred's last course (CS026) ===");
+            // db.dropCourse("12345", "CS026");
+            // // 10. List current courses for Billy
+            // System.out.println("\n=== Billy's Current Courses ===");
+            // db.listCurrentCourses("14682");
+            // // 11. List previous quarter grades for Billy
+            // System.out.println("\n=== Billy's Previous Quarter Grades ===");
+            // db.listPreviousQuarterGrades("14682");
+            // clean up
             db.close();
-
         } catch (SQLException e) {
-            System.out.println("❌ SQL error:");
+            System.out.println(" SQL error:");
             e.printStackTrace();
         }
     }

@@ -602,21 +602,13 @@ public class DatabaseManager {
     // ----------- PIN MANAGEMENT (8-10)------------
     //9- verify pin(never deals with plain-text PINs directly from the database. It only compares hashes)
     public boolean verifyPin(String perm, String pin) throws SQLException {
-
-        /**
-         * verifyPin: Checks if the supplied plain-text PIN matches the stored
-         * (hashed) PIN for student `perm`. Returns true if the PIN is correct,
-         * false otherwise. Only this method and setPin should ever access the
-         * PIN.
-         */
-        // Use Oracle's hash_pin function to hash the supplied PIN and compare
-        String sql = "SELECT 1 FROM student WHERE perm_num = ? AND pin = hash_pin(?)";
+        // Compare with stored hash directly - trigger will handle hashing
+        String sql = "SELECT 1 FROM student WHERE perm_num = ? AND pin = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, perm);
-            ps.setString(2, pin); // Pass plain PIN - Oracle will hash it
+            ps.setString(2, pin); // Pass plain PIN - trigger will hash it
             try (ResultSet rs = ps.executeQuery()) {
                 boolean valid = rs.next();
-                // Generic message to avoid information leakage
                 System.out.println(valid ? "PIN verified" : "Invalid credentials");
                 return valid;
             }
@@ -626,12 +618,6 @@ public class DatabaseManager {
 
     //10- set pin (only way to change a student's PIN)
     public boolean setPin(String perm, String oldPin, String newPin) throws SQLException {
-
-        /**
-         * setPin: Changes the PIN from oldPin to newPin if oldPin is correct.
-         * Returns true on success, false otherwise. This is the only way to
-         * change a student's PIN.
-         */
         // 1) Verify the old PIN first (for security)
         if (!verifyPin(perm, oldPin)) {
             System.out.println("Cannot change PIN: old PIN does not match.");
@@ -644,7 +630,7 @@ public class DatabaseManager {
             return false;
         }
 
-        // 3) Update with plain PIN - Oracle trigger will hash it automatically
+        // 3) Update with plain PIN - trigger will hash it automatically
         String upd = "UPDATE student SET pin = ? WHERE perm_num = ?";
         try (PreparedStatement ps = conn.prepareStatement(upd)) {
             ps.setString(1, newPin); // Pass plain PIN - trigger will hash it

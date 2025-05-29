@@ -16,6 +16,13 @@ public class GoldInterface {
     
     public void start() {
         System.out.println("Welcome to the Student Interface");
+        System.out.println("Please login first");
+        
+        if (!login()) {
+            System.out.println("Login failed. Exiting...");
+            return;
+        }
+        
         System.out.println("Type 'help' for available commands");
         
         while (true) {
@@ -34,63 +41,47 @@ public class GoldInterface {
                         break;
                         
                     case "list":
-                        if (parts.length < 2) {
-                            System.out.println("Usage: list <student_id>");
-                        } else {
-                            db.listCurrentCourses(parts[1]);
-                        }
+                        db.listCurrentCourses(currentStudent);
                         break;
                         
                     case "grades":
-                        if (parts.length < 2) {
-                            System.out.println("Usage: grades <student_id>");
-                        } else {
-                            db.listPreviousQuarterGrades(parts[1]);
-                        }
+                        db.listPreviousQuarterGrades(currentStudent);
                         break;
                         
                     case "add":
-                        if (parts.length < 3) {
-                            System.out.println("Usage: add <student_id> <course_number>");
+                        if (parts.length < 2) {
+                            System.out.println("Usage: add <course_number>");
                         } else {
-                            db.addCourse(parts[1], parts[2]);
+                            db.addCourse(currentStudent, parts[1]);
                         }
                         break;
                         
                     case "drop":
-                        if (parts.length < 3) {
-                            System.out.println("Usage: drop <student_id> <course_number>");
+                        if (parts.length < 2) {
+                            System.out.println("Usage: drop <course_number>");
                         } else {
-                            db.dropCourse(parts[1], parts[2]);
+                            db.dropCourse(currentStudent, parts[1]);
                         }
                         break;
                         
                     case "check":
-                        if (parts.length < 2) {
-                            System.out.println("Usage: check <student_id>");
-                        } else {
-                            db.requirementsCheck(parts[1]);
-                        }
+                        db.requirementsCheck(currentStudent);
                         break;
                         
                     case "plan":
-                        if (parts.length < 2) {
-                            System.out.println("Usage: plan <student_id>");
-                        } else {
-                            db.makePlan(parts[1]);
-                        }
+                        db.makePlan(currentStudent);
                         break;
                         
                     case "pin":
-                        if (parts.length < 4) {
-                            System.out.println("Usage: pin <student_id> <old_pin> <new_pin>");
+                        if (parts.length < 3) {
+                            System.out.println("Usage: pin <old_pin> <new_pin>");
                         } else {
-                            db.setPin(parts[1], parts[2], parts[3]);
+                            db.setPin(currentStudent, parts[1], parts[2]);
                         }
                         break;
                         
-                    case "exit":
-                        System.out.println("Goodbye!");
+                    case "logout":
+                        System.out.println("Logged out. Goodbye!");
                         return;
                         
                     default:
@@ -102,16 +93,33 @@ public class GoldInterface {
         }
     }
     
+    private boolean login() {
+        System.out.print("Enter Student ID: ");
+        String perm = scanner.nextLine().trim();
+        System.out.print("Enter PIN: ");
+        String pin = scanner.nextLine().trim();
+        
+        try {
+            if (db.verifyPin(perm, pin)) {
+                currentStudent = perm;
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("Login error: " + e.getMessage());
+        }
+        return false;
+    }
+    
     private void showHelp() {
         System.out.println("\nAvailable commands:");
-        System.out.println("  list <student_id>                    - List current courses");
-        System.out.println("  grades <student_id>                  - View previous quarter grades");
-        System.out.println("  add <student_id> <course>           - Add a course");
-        System.out.println("  drop <student_id> <course>          - Drop a course");
-        System.out.println("  check <student_id>                  - Check degree requirements");
-        System.out.println("  plan <student_id>                   - Generate study plan");
-        System.out.println("  pin <student_id> <old> <new>        - Change PIN");
-        System.out.println("  help                                - Show this help message");
-        System.out.println("  exit                                - Exit the program");
+        System.out.println("  list                    - List current courses");
+        System.out.println("  grades                  - View previous quarter grades");
+        System.out.println("  add <course>           - Add a course");
+        System.out.println("  drop <course>          - Drop a course");
+        System.out.println("  check                  - Check degree requirements");
+        System.out.println("  plan                   - Generate study plan");
+        System.out.println("  pin <old> <new>        - Change PIN");
+        System.out.println("  help                   - Show this help message");
+        System.out.println("  logout                 - Log out and exit");
     }
 }

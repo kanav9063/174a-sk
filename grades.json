@@ -1,8 +1,14 @@
 {
-    "enrollment_id": 56789,
-    "yr_qtr": "25W",
-    "grades": [
-      { "perm": "12345", "grade": "A" },
-      { "perm": "37642", "grade": "C+" }
-    ]
-  }
+"enrollment_id": 56789,
+"yr_qtr": "25W",
+"grades": [
+  { "perm": "12345", "grade": "A" },
+  { "perm": "14682", "grade": "B" },
+  { "perm": "37642", "grade": "B" },
+  { "perm": "85821", "grade": "C" },
+  { "perm": "38567", "grade": "A" },
+  { "perm": "81934", "grade": "A" },
+  { "perm": "53540", "grade": "C" },
+  { "perm": "18221", "grade": "B" }
+]
+}

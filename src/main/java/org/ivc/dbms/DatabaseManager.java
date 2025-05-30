@@ -132,10 +132,42 @@ public class DatabaseManager {
                     System.out.println("Cannot enroll in more than 5 courses.");
                     return false;
                 }
+                // we make the following checks:
+                // 1. Course is offered this quarter
+                // 2. Course is not full
+                // 3. Student is not already enrolled
+                // 4. Sudent is not in more than 5 courses this quarter
+                // 5. Student has passed all prerequisites (A/B/C)
+                // 6. No concurrent enrollment in prerequisite and course
+                //7. can repat classes if not in same quarter
+
             }
         }
 
-        // 2.5) All checks passed, insert the enrollment (grade is NULL for current)
+        // 2.5) Check if student has satisfied all prerequisites for this course
+        String prereqSql = "SELECT pid FROM prerequisites WHERE cid = ?";
+        try (PreparedStatement ps = conn.prepareStatement(prereqSql)) {
+            ps.setString(1, cno);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String prereqCno = rs.getString("pid");
+                    // For each prerequisite, check if student has passed it (A/B/C)
+                    String passedSql = "SELECT 1 FROM takes_courses tc JOIN courseoffering_offeredin co ON tc.enrollment_id = co.enrollment_id AND tc.yr_qtr = co.yr_qtr WHERE tc.perm_num = ? AND co.cno = ? AND tc.grade IN ('A','B','C')";
+                    try (PreparedStatement ps2 = conn.prepareStatement(passedSql)) {
+                        ps2.setString(1, perm);
+                        ps2.setString(2, prereqCno);
+                        try (ResultSet rs2 = ps2.executeQuery()) {
+                            if (!rs2.next()) {
+                                System.out.println("Missing prerequisite: " + prereqCno);
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2.6) All checks passed, insert the enrollment (grade is NULL for current)
         String insSql
                 = "INSERT INTO takes_courses "
                 + "(perm_num, enrollment_id, yr_qtr, grade) "
@@ -148,7 +180,7 @@ public class DatabaseManager {
         }
 
         // Success message
-        System.out.printf("✅ %s enrolled in %s (%s)%n", perm, cno, CURRENT_QTR);
+        System.out.printf(" %s enrolled in %s (%s)%n", perm, cno, CURRENT_QTR);
         return true;
     }
 
@@ -220,7 +252,7 @@ public class DatabaseManager {
             }
 
             conn.commit();
-            System.out.printf("✅ Dropped %s for %s%n", cno, perm);
+            System.out.printf(" Dropped %s for %s%n", cno, perm);
             return true;
         } catch (SQLException e) {
             conn.rollback();
@@ -243,7 +275,7 @@ public class DatabaseManager {
             ps.setString(1, perm);
             ps.setString(2, CURRENT_QTR);
             try (ResultSet rs = ps.executeQuery()) {
-                System.out.println("📚 Current Courses:");
+                System.out.println(" Current Courses:");
                 boolean found = false;
                 while (rs.next()) {
                     found = true;
@@ -260,8 +292,8 @@ public class DatabaseManager {
         }
     }
 
-    // 5. Lists all grades from the PREVIOUS quarter.
-    public void listPreviousQuarterGrades(String perm) throws SQLException {
+    // 5. Lists all grades from the specified quarter.
+    public void listQuarterGrades(String perm, String yrQtr) throws SQLException {
         String sql
                 = "SELECT co.cno, tc.grade "
                 + "FROM takes_courses tc "
@@ -271,9 +303,9 @@ public class DatabaseManager {
                 + "WHERE tc.perm_num = ? AND tc.yr_qtr = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, perm);
-            ps.setString(2, PREVIOUS_QTR);
+            ps.setString(2, yrQtr);
             try (ResultSet rs = ps.executeQuery()) {
-                System.out.println("Previous Quarter Grades:");
+                System.out.println("Grades for quarter " + yrQtr + ":");
                 boolean found = false;
                 while (rs.next()) {
                     found = true;
@@ -283,7 +315,7 @@ public class DatabaseManager {
                     );
                 }
                 if (!found) {
-                    System.out.println("No grades found for " + PREVIOUS_QTR);
+                    System.out.println("No grades found for " + yrQtr);
                 }
             }
         }
@@ -600,7 +632,6 @@ public class DatabaseManager {
     }
 
     // ----------- PIN MANAGEMENT (8-10)------------
-
     //8- hash function
     private String hashPin(String pin) {
         try {
@@ -609,7 +640,9 @@ public class DatabaseManager {
             StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
                 hexString.append(hex);
             }
             return hexString.toString();
@@ -878,19 +911,19 @@ public class DatabaseManager {
 
     //list every student in a course, regsitrar
     public void listStudentsInCourse(String courseNumber, String quarter) throws SQLException {
-        String sql = "SELECT DISTINCT s.perm_num, s.name " +
-                    "FROM student s " +
-                    "WHERE s.perm_num IN (" +
-                    "    SELECT tc.perm_num " +
-                    "    FROM takes_courses tc " +
-                    "    WHERE tc.enrollment_id IN (" +
-                    "        SELECT co.enrollment_id " +
-                    "        FROM courseoffering_offeredin co " +
-                    "        WHERE co.cno = ? " +
-                    "    ) " +
-                    "    AND tc.yr_qtr = ?" +
-                    ")";
-        
+        String sql = "SELECT DISTINCT s.perm_num, s.name "
+                + "FROM student s "
+                + "WHERE s.perm_num IN ("
+                + "    SELECT tc.perm_num "
+                + "    FROM takes_courses tc "
+                + "    WHERE tc.enrollment_id IN ("
+                + "        SELECT co.enrollment_id "
+                + "        FROM courseoffering_offeredin co "
+                + "        WHERE co.cno = ? "
+                + "    ) "
+                + "    AND tc.yr_qtr = ?"
+                + ")";
+
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, courseNumber);
             ps.setString(2, quarter);
@@ -899,9 +932,9 @@ public class DatabaseManager {
                 boolean found = false;
                 while (rs.next()) {
                     found = true;
-                    System.out.printf("  %s - %s%n", 
-                        rs.getString("perm_num"), 
-                        rs.getString("name"));
+                    System.out.printf("  %s - %s%n",
+                            rs.getString("perm_num"),
+                            rs.getString("name"));
                 }
                 if (!found) {
                     System.out.println("  No students enrolled in this course.");
@@ -915,15 +948,12 @@ public class DatabaseManager {
     //     String sql = "SELECT perm_num, pin FROM student";
     //     try (Statement stmt = conn.createStatement();
     //          ResultSet rs = stmt.executeQuery(sql)) {
-            
     //         System.out.println("\nCurrent PINs and their hashed versions:");
     //         System.out.println("----------------------------------------");
-            
     //         while (rs.next()) {
     //             String perm = rs.getString("perm_num");
     //             String currentPin = rs.getString("pin");
     //             String hashedPin = hashPin(currentPin);
-                
     //             System.out.printf("Student %s:%n", perm);
     //             System.out.printf("  Current PIN: %s%n", currentPin);
     //             System.out.printf("  Hashed PIN: %s%n", hashedPin);
@@ -931,6 +961,4 @@ public class DatabaseManager {
     //         }
     //     }
     // }
-    
-
 }

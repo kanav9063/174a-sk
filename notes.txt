@@ -1,0 +1,165 @@
+# DatabaseManager.java - Function Explanations for Presentation
+
+This document provides a detailed guide to the functions within `DatabaseManager.java`. It's designed to help explain the system's capabilities from the perspective of both a student (Gold Interface) and an administrator (Registrar Interface).
+
+## Core Concepts & Setup
+
+### Constants
+- **`CURRENT_QTR` (String: "25S")**: Defines the current academic term as Spring 2025. This is crucial for operations like course enrollment and requirements planning.
+- **`PREVIOUS_QTR` (String: "25W")**: Defines the immediately preceding term as Winter 2025, used mainly for fetching recent grades.
+
+### `public DatabaseManager(Connection conn)` - Constructor
+- **What it does**: Establishes the initial link to the database.
+- **How it works**: When the system starts a session for either a student or registrar, this constructor takes the active database connection and stores it, allowing `DatabaseManager` to execute queries.
+
+### `public void close() throws SQLException` - Closing the Connection
+- **What it does**: Properly disconnects from the database.
+- **How it works**: At the end of a user session, this method is called to ensure the database connection is released, which is important for resource management and security.
+
+---
+## Student-Facing Features (Gold Interface)
+
+These functions are typically accessed by students through their self-service portal.
+
+### Course Enrollment & Management
+
+#### `public boolean addCourse(String perm, String cno) throws SQLException` - Adding a Course
+- **What it does**: Allows a student to enroll in a course for the `CURRENT_QTR`.
+- **How it works & Key Rules**:
+    1.  **Checks Availability**: Verifies if the course (`cno`) is offered in the `CURRENT_QTR`. If not, enrollment fails.
+    2.  **Checks Capacity**: Ensures the course is not already full by comparing current enrollment against `max_enrollment`.
+    3.  **Prevents Duplicates**: Stops a student from enrolling in the same course multiple times in the same quarter.
+    4.  **Enforces Course Load Limit**: A student cannot enroll if they are already in 5 or more courses for the `CURRENT_QTR`.
+    5.  **Successful Enrollment**: If all checks pass, the student is added to the `takes_courses` table for that course and quarter. The `grade` is initially `NULL`.
+- **Outcome**: Returns `true` on success with a confirmation message, `false` otherwise with an error explaining why.
+
+#### `public boolean dropCourse(String perm, String cno) throws SQLException` - Dropping a Course
+- **What it does**: Allows a student to withdraw from a course in the `CURRENT_QTR`. This operation is transactional to ensure data integrity.
+- **How it works & Key Rules**:
+    1.  **Transactional Safety**: Database auto-commit is turned off at the start.
+    2.  **Verifies Offering**: Confirms the course is offered this quarter.
+    3.  **Confirms Enrollment**: Checks if the student is actually enrolled in the course.
+    4.  **Prevents Dropping Last Course**: A student cannot drop a course if it's the only one they are enrolled in for the `CURRENT_QTR`.
+    5.  **Successful Drop**: If all checks pass, the student's record is removed from `takes_courses`. The changes are then committed to the database.
+- **Error Handling**: If any step fails or an SQL error occurs, the transaction is rolled back, leaving the database state unchanged. Auto-commit is restored in a `finally` block.
+- **Outcome**: Returns `true` on success, `false` if a rule is violated.
+
+#### `public void listCurrentCourses(String perm) throws SQLException` - Viewing Current Schedule
+- **What it does**: Displays a student's current list of enrolled courses for the `CURRENT_QTR`.
+- **How it works**: Queries the `takes_courses` and `courseoffering_offeredin` tables to find courses the student is taking in the `CURRENT_QTR`.
+- **Output**: Prints a formatted list showing Course Number, Time/Location, and Professor for each course. If no courses, it states that.
+
+### Academic Records & Planning
+
+#### `public void listPreviousQuarterGrades(String perm) throws SQLException` - Viewing Past Grades
+- **What it does**: Shows a student their grades from the `PREVIOUS_QTR`.
+- **How it works**: Queries `takes_courses` and `courseoffering_offeredin` for the student's records in the `PREVIOUS_QTR`.
+- **Output**: Prints a list of Course Numbers and the corresponding Grades.
+
+#### `public void requirementsCheck(String perm) throws SQLException` - Checking Graduation Requirements
+- **What it does**: Assesses if a student has met the mandatory and elective course requirements for their major.
+- **Key Assumptions**: Courses taken in the `CURRENT_QTR` are considered "passed" for this check.
+- **How it works**:
+    1.  **Student & Major Info**: Retrieves the student's major and the number of electives needed.
+    2.  **Requirement Lists**: Fetches all mandatory and elective courses for that major.
+    3.  **"Passed" Courses**: Compiles a list of all courses the student has successfully completed (grade A, B, or C in past quarters) or is currently taking.
+    4.  **Analysis**: Compares the "passed" courses against the major's requirements.
+- **Output**: Prints "Requirements met: Yes" or "Requirements not yet met:", followed by a list of remaining mandatory courses and the number of electives still needed.
+
+#### `public void makePlan(String perm) throws SQLException` - Generating a Study Plan
+- **What it does**: Suggests a potential quarter-by-quarter course plan for up to 12 future quarters to help a student complete remaining graduation requirements.
+- **Key Assumptions & Strategy**:
+    - Considers `CURRENT_QTR` courses as "passed".
+    - Students can take a maximum of 5 courses per quarter.
+    - The plan starts *after* the `CURRENT_QTR`.
+    - **Greedy Approach**:
+        - Prioritizes remaining mandatory courses.
+        - Then fills with electives if space allows and electives are needed.
+        - Only suggests courses if prerequisites (based on the accumulating "passed" set, including planned courses) are met.
+        - Only considers courses known to be offered in a given term type (W, F, S - based on `substr(yr_qtr,-1)` which checks the last character of the quarter string).
+- **How it works**:
+    1.  **Initial State**: Determines current progress (similar to `requirementsCheck`). If already eligible to graduate, no plan is needed.
+    2.  **Prerequisites**: Loads all course prerequisites from the database.
+    3.  **Future Terms**: Generates a list of the next 12 academic term suffixes (W, F, S cycle).
+    4.  **Plan Construction**: For each future term:
+        a.  Identifies courses offered in that term type.
+        b.  Filters these to courses for which prerequisites are met and that haven't been "passed" yet.
+        c.  Selects up to 5 courses (mandatory first, then electives).
+        d.  Adds these selected courses to the plan for that term and simulates them as "passed" for subsequent term planning.
+- **Output**: Prints the suggested plan quarter by quarter, or a message if no plan is viable or needed.
+
+### Account Management
+
+#### `private String hashPin(String pin)` - Internal PIN Hashing (Java-side)
+- **What it does**: Securely hashes a plain-text PIN using the SHA-256 algorithm. This is an internal helper function.
+- **How it works**:
+    1.  Uses `java.security.MessageDigest` to get an SHA-256 instance.
+    2.  Converts the PIN string to UTF-8 bytes.
+    3.  Generates the hash (a byte array).
+    4.  Converts the byte array into a hexadecimal string (64 characters).
+- **Security Note**: This method performs hashing within the Java application. The database stores these pre-hashed PINs.
+
+#### `public boolean verifyPin(String perm, String pin) throws SQLException` - Verifying a PIN
+- **What it does**: Authenticates a student by checking if their entered `pin` matches the stored (hashed) PIN.
+- **How it works**:
+    1.  The student's input `pin` is first hashed using the internal `hashPin` method.
+    2.  A database query then looks for a student with the given `perm` number whose stored `pin` column (which contains a hash) matches this newly computed hash of the input PIN.
+- **Output**: Prints "PIN verified" or "Invalid credentials" (a generic message for security) and returns `true` or `false`.
+
+#### `public boolean setPin(String perm, String oldPin, String newPin) throws SQLException` - Changing a PIN
+- **What it does**: Allows a student to change their PIN from `oldPin` to `newPin`.
+- **How it works**:
+    1.  **Authenticates**: First, verifies the `oldPin` using `verifyPin`. If incorrect, the process stops.
+    2.  **Validates New PIN**: Checks if the `newPin` is 4 or 5 digits long.
+    3.  **Hashes New PIN**: The `newPin` is hashed using the internal `hashPin` method.
+    4.  **Updates Database**: The student's record in the `student` table is updated with this new hashed PIN.
+- **Output**: Prints a success or failure message and returns `true` or `false`.
+
+---
+## Administrative Features (Registrar Interface)
+
+These functions are typically used by administrative staff.
+
+### Student and Course Information
+
+#### `public void listAllStudents() throws SQLException` - Listing All Students
+- **What it does**: Provides a complete roster of all students in the system.
+- **How it works**: Queries the `student` table for all records and prints each student's perm number and name.
+
+#### `public void listStudentsInCourse(String courseNumber, String quarter) throws SQLException` - Roster for a Course
+- **What it does**: Displays all students enrolled in a specific course (`courseNumber`) during a given `quarter`.
+- **How it works**: Uses nested SQL queries to find `courseoffering_offeredin` entries matching the course number, then `takes_courses` entries for that offering in the specified quarter, and finally lists the names and perm numbers of the students from the `student` table.
+- **Output**: A list of student perm numbers and names for that class section.
+
+### Grade Management
+
+#### `public boolean enterGradesFromFile(String filename) throws SQLException` - Batch Grade Entry from JSON
+- **What it does**: Allows the registrar to upload grades for an entire course section from a JSON file.
+- **How it works**:
+    1.  **File Processing**: Reads the specified JSON file. The file is expected to contain an `enrollment_id`, `yr_qtr`, and an array of `grades` (each with a student `perm` and their `grade`).
+    2.  **Course Validation**: Confirms that the `enrollment_id` from the file corresponds to a valid course offering.
+    3.  **Grade Processing Loop**: For each student grade in the JSON:
+        a.  **Validates Grade Format**: Ensures the grade string (e.g., "A", "B+", "F") is valid.
+        b.  **Database Update**: Updates the `grade` in the `takes_courses` table for the student in that specific course offering and quarter.
+    4.  **Reporting**: Prints a summary of how many grades were successfully processed and how many failed (e.g., due to invalid format or student not found in course).
+- **Outcome**: Returns `true` if all grades were processed without errors, `false` otherwise.
+
+### Reporting
+
+#### `public void requestTranscript(String perm) throws SQLException` - Generating a Student Transcript
+- **What it does**: Produces an academic transcript for a specified student.
+- **How it works**: Retrieves all completed courses (where `grade` is not null) for the student. It joins data from `takes_courses`, `courseoffering_offeredin` (for offering details like professor, time) and `course` (for course title/enrollment code).
+- **Output**: A formatted transcript showing: Quarter, Course Number, Enrollment ID (from `c.en_code`), Grade, Professor, and Time/Location, ordered by most recent quarter first.
+
+#### `public void generateGradeMailers(String yrQtr) throws SQLException` - Creating Grade Mailers
+- **What it does**: Generates individual grade reports for all students who received grades in a specified `yrQtr`.
+- **How it works**:
+    1.  **Identifies Students**: Finds all distinct students who have graded entries in `takes_courses` for the given quarter.
+    2.  **Individual Reports**: For each student:
+        a.  Prints a mailer header with the student's name, perm number, major, and the quarter.
+        b.  Queries and lists all courses taken by that student in that quarter, showing the course number, title (`en_code`), professor, and grade.
+- **Output**: A series of formatted grade reports, one for each eligible student.
+
+---
+This detailed breakdown should cover the core functionality for your presentation.
+The key change to remember from previous discussions is that PIN hashing is now handled within the Java `DatabaseManager` itself, not by database triggers or functions.

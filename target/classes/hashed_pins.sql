@@ -1,4 +1,3 @@
-ALTER TABLE student MODIFY pin VARCHAR2(64);
 
 UPDATE student SET pin = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5' WHERE perm_num = '12345';
 UPDATE student SET pin = '1e05e94f3dc87bcad898f8b5dba5df7c9f1567de45c37df14c3b9abfd00444e8' WHERE perm_num = '14682';
@@ -16,5 +15,6 @@ UPDATE student SET pin = 'f4c94be46d289d52dc7326896923b7cfbc837c2731430c1430f3ea
 UPDATE student SET pin = '01c6796d14a48e9f352fc2a60509743046918bd6cd2679c6c092cb71ea4854c3' WHERE perm_num = '53540';
 UPDATE student SET pin = 'c9ab5412eaee51f750490b9c9b55d9b071d6a1622e56a61c5762b009510f0ee3' WHERE perm_num = '82452';
 UPDATE student SET pin = 'c520d3b7c1b33e652e5db266366a1dc68c0a74571a449a6dc1314916a24b036d' WHERE perm_num = '18221';
+
 
 commit;

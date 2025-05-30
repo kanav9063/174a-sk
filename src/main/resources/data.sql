@@ -1,16 +1,12 @@
--- -- ====================================================
--- -- 0. Drop existing tables in reverse‑dependency order
--- -- ====================================================
--- DROP TABLE takes_courses           CASCADE CONSTRAINTS;
--- DROP TABLE courseoffering_offeredin CASCADE CONSTRAINTS;
--- DROP TABLE prerequisites           CASCADE CONSTRAINTS;
--- DROP TABLE mandatory               CASCADE CONSTRAINTS;
--- DROP TABLE elective                CASCADE CONSTRAINTS;
--- DROP TABLE course                  CASCADE CONSTRAINTS;
--- DROP TABLE student                 CASCADE CONSTRAINTS;
--- DROP TABLE major_managedby         CASCADE CONSTRAINTS;
--- DROP TABLE department              CASCADE CONSTRAINTS;
-
+DELETE FROM takes_courses;
+DELETE FROM courseoffering_offeredin;
+DELETE FROM prerequisites;
+DELETE FROM elective;
+DELETE FROM mandatory;
+DELETE FROM course;
+DELETE FROM student;
+DELETE FROM major_managedby;
+DELETE FROM department;
 -- ====================================================
 -- 1. Departments
 -- ====================================================
@@ -215,9 +211,7 @@ INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('12345',5
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('12345',93156,'25W','C');
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('12345',76543,'24F','A');
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('12345',81623,'24F','A');
-INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('12345',91823,'24S','A');
-INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('12345',71631,'24S','A');
-INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('12345',82612,'24S','A');
+
 
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('14682',41725,'25W','B');
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('14682',56789,'25W','B');
@@ -239,7 +233,7 @@ INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('38567',5
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('38567',91823,'24F','B');
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('38567',32165,'24F','B');
 
-INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('81934',93156,'25W','C');
+INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('81934',32165,'25W','C');
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('81934',56789,'25W','A');
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('81934',76543,'24F','A');
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('81934',91823,'24F','B');
@@ -260,7 +254,7 @@ INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('46590',7
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('91734',76543,'25W','A');
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('73521',76543,'25W','B');
 -- INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('53540',54321,'25S',NULL);  -- Joe Pepsi currently none
-INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('53540',76543,'25W','C');
+INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('53540',32165,'25W','C');
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('53540',56789,'25W','C');
 -- INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('82452',93156,'25S',NULL);
 INSERT INTO takes_courses(perm_num,enrollment_id,yr_qtr,grade) VALUES ('82452',91823,'25W','C');
@@ -300,3 +294,5 @@ INSERT INTO elective(majorname,cno) VALUES ('ECE','EC140');
 INSERT INTO elective(majorname,cno) VALUES ('ECE','EC152');
 INSERT INTO elective(majorname,cno) VALUES ('ECE','EC154');
 INSERT INTO elective(majorname,cno) VALUES ('ECE','CS174');
+
+commit;

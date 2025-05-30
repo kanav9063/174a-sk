@@ -807,6 +807,8 @@ public class DatabaseManager {
      * feature
      */
     public void generateGradeMailers(String yrQtr) throws SQLException {
+        // First query: Gets all students who have grades for the specified quarter
+        // Returns: student ID, name, and major for students with non-null grades
         String sql
                 = "SELECT DISTINCT s.perm_num, s.name, s.majorname "
                 + "FROM student s, takes_courses tc "
@@ -833,7 +835,13 @@ public class DatabaseManager {
                     System.out.printf("Student: %s (%s)%n", name, perm);
                     System.out.printf("Major: %s%n", major);
                     System.out.println("-".repeat(60));
-
+                    
+                    // This query retrieves detailed course information for a specific student in a given quarter. It joins four tables:
+                    // takes_courses (for enrollment and grade info), student (for student details), 
+                    // courseoffering_offeredin (for course offering details like professor), and course (for course details).
+                    // For each course, it returns the student's ID and name, course number, enrollment code, grade received,
+                    // professor name (shows "TBA" if null), and quarter. The results are filtered by student ID and quarter,
+                    // and sorted by course number for consistent display.
                     String courseSql
                             = "SELECT tc.perm_num, s.name, co.cno, c.en_code, tc.grade, co.professor_name, co.yr_qtr "
                             + "FROM takes_courses tc, student s, courseoffering_offeredin co, course c "
@@ -878,6 +886,9 @@ public class DatabaseManager {
 
     //list every student in a course, regsitrar
     public void listStudentsInCourse(String courseNumber, String quarter) throws SQLException {
+        // 1. Inner query: Gets enrollment_id(s) for the given course number (cno)
+        // 2. Middle query: Gets perm_num(s) of students enrolled in those course offerings for the given quarter
+        // 3. Outer query: Gets the student details (perm_num and name) for those students
         String sql = "SELECT DISTINCT s.perm_num, s.name " +
                     "FROM student s " +
                     "WHERE s.perm_num IN (" +

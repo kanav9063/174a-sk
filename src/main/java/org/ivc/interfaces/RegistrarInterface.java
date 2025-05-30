@@ -88,6 +88,14 @@ public class RegistrarInterface {
                             db.listPreviousQuarterGrades(parts[1]);
                         }
                         break;
+
+                        case "enrolled":
+                        if (parts.length < 3) {
+                            System.out.println("Usage: enrolled <course_number> <quarter>");
+                        } else {
+                            db.listStudentsInCourse(parts[1], parts[2]);
+                        }
+                        break;
                         
                     case "exit":
                     case "quit":
@@ -112,6 +120,7 @@ public class RegistrarInterface {
         System.out.println("  drop <student_id> <course> - Drop student from course");
         System.out.println("  list <student_id>       - List student's current courses");
         System.out.println("  studentgrades <student_id> - View student's previous quarter grades");
+        System.out.println("  enrolled <course> <quarter> - List students enrolled in a course for specific quarter");
         System.out.println("  help                    - Show this help message");
         System.out.println("  exit/quit              - Exit the program");
     }

@@ -154,7 +154,9 @@ public class Main {
             //pin  verification come bakc to if needed
             // db.setPin("12345", "12345", "12345");
             // db.verifyPin("12345", "12345");
-            // db.close(); //commenting for now
+            // db.printHashedPins();
+            //db.close(); //commenting for now
+
         } catch (SQLException e) {
             System.out.println(" SQL error:");
             e.printStackTrace();

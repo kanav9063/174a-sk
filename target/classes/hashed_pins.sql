@@ -1,0 +1,20 @@
+ALTER TABLE student MODIFY pin VARCHAR2(64);
+
+UPDATE student SET pin = '5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5' WHERE perm_num = '12345';
+UPDATE student SET pin = '1e05e94f3dc87bcad898f8b5dba5df7c9f1567de45c37df14c3b9abfd00444e8' WHERE perm_num = '14682';
+UPDATE student SET pin = '6a35a9cb6bc3593a9f6ddf0be780f3130161921ec1b5047453b4a0777b6cd8d2' WHERE perm_num = '37642';
+UPDATE student SET pin = 'fbe22d6c76ebbb5598aa833e967ea6e0130e0502ad5aaae2ff4d19c8ed44b9c3' WHERE perm_num = '85821';
+UPDATE student SET pin = '966e0a376157a20ec409b64bb39eb138c5e6085e91168644e088916cd9a3db15' WHERE perm_num = '38567';
+UPDATE student SET pin = 'c264d2538698aceef2f7f127c8293439eb291c9d06da261bd837c58108c1038f' WHERE perm_num = '81934';
+UPDATE student SET pin = 'db8fc4150e0b6ff7e80684565ebe2eb4011a0b9292f3b4a6eef29010e6c54559' WHERE perm_num = '98246';
+UPDATE student SET pin = 'd4be6b6328194ad8c540824d6289dfd4555cad54ce00fff68b47a649037a0f8d' WHERE perm_num = '35328';
+UPDATE student SET pin = '671754d0bd16df89f2e79a9568c90b30f1ea8f881aedb570d516d966bf832f50' WHERE perm_num = '84713';
+UPDATE student SET pin = 'a3e5879009f973c93e65779308f048ef60e1b23050676348f3de75d532af9ce2' WHERE perm_num = '36912';
+UPDATE student SET pin = '69b19d3e2dc1fee0d74f185f2d92dfa7b32c043997775f265ecce7716f9c9089' WHERE perm_num = '46590';
+UPDATE student SET pin = '41f15c5a2ecc889bb58bf1b4b0f1e5197ee009351acfe0bcbea639c30595329c' WHERE perm_num = '91734';
+UPDATE student SET pin = 'f4c94be46d289d52dc7326896923b7cfbc837c2731430c1430f3eafb09ed2681' WHERE perm_num = '73521';
+UPDATE student SET pin = '01c6796d14a48e9f352fc2a60509743046918bd6cd2679c6c092cb71ea4854c3' WHERE perm_num = '53540';
+UPDATE student SET pin = 'c9ab5412eaee51f750490b9c9b55d9b071d6a1622e56a61c5762b009510f0ee3' WHERE perm_num = '82452';
+UPDATE student SET pin = 'c520d3b7c1b33e652e5db266366a1dc68c0a74571a449a6dc1314916a24b036d' WHERE perm_num = '18221';
+
+commit;

@@ -273,7 +273,7 @@ public class DatabaseManager {
             ps.setString(1, perm);
             ps.setString(2, PREVIOUS_QTR);
             try (ResultSet rs = ps.executeQuery()) {
-                System.out.println("📝 Previous Quarter Grades:");
+                System.out.println("Previous Quarter Grades:");
                 boolean found = false;
                 while (rs.next()) {
                     found = true;
@@ -600,13 +600,32 @@ public class DatabaseManager {
     }
 
     // ----------- PIN MANAGEMENT (8-10)------------
+
+    //8- hash function
+    private String hashPin(String pin) {
+        try {
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(pin.getBytes("UTF-8"));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Error hashing PIN", e);
+        }
+    }
+
     //9- verify pin(never deals with plain-text PINs directly from the database. It only compares hashes)
     public boolean verifyPin(String perm, String pin) throws SQLException {
-        // Compare with stored hash directly - trigger will handle hashing
+        // Hash the input PIN before comparing with stored hash
+        String hashedPin = hashPin(pin);
         String sql = "SELECT 1 FROM student WHERE perm_num = ? AND pin = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, perm);
-            ps.setString(2, pin); // Pass plain PIN - trigger will hash it
+            ps.setString(2, hashedPin); // Compare with hashed PIN
             try (ResultSet rs = ps.executeQuery()) {
                 boolean valid = rs.next();
                 System.out.println(valid ? "PIN verified" : "Invalid credentials");
@@ -614,7 +633,6 @@ public class DatabaseManager {
             }
         }
     }
-    //hash the pin before checking w ://make sure you can actually login
 
     //10- set pin (only way to change a student's PIN)
     public boolean setPin(String perm, String oldPin, String newPin) throws SQLException {
@@ -630,10 +648,11 @@ public class DatabaseManager {
             return false;
         }
 
-        // 3) Update with plain PIN - trigger will hash it automatically
+        // 3) Hash the new PIN before storing
+        String hashedNewPin = hashPin(newPin);
         String upd = "UPDATE student SET pin = ? WHERE perm_num = ?";
         try (PreparedStatement ps = conn.prepareStatement(upd)) {
-            ps.setString(1, newPin); // Pass plain PIN - trigger will hash it
+            ps.setString(1, hashedNewPin); // Store hashed PIN in database 
             ps.setString(2, perm);
             ps.executeUpdate();
         }
@@ -856,5 +875,62 @@ public class DatabaseManager {
             }
         }
     }
+
+    //list every student in a course, regsitrar
+    public void listStudentsInCourse(String courseNumber, String quarter) throws SQLException {
+        String sql = "SELECT DISTINCT s.perm_num, s.name " +
+                    "FROM student s " +
+                    "WHERE s.perm_num IN (" +
+                    "    SELECT tc.perm_num " +
+                    "    FROM takes_courses tc " +
+                    "    WHERE tc.enrollment_id IN (" +
+                    "        SELECT co.enrollment_id " +
+                    "        FROM courseoffering_offeredin co " +
+                    "        WHERE co.cno = ? " +
+                    "    ) " +
+                    "    AND tc.yr_qtr = ?" +
+                    ")";
+        
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, courseNumber);
+            ps.setString(2, quarter);
+            try (ResultSet rs = ps.executeQuery()) {
+                System.out.println("\nStudents enrolled in " + courseNumber + " (" + quarter + "):");
+                boolean found = false;
+                while (rs.next()) {
+                    found = true;
+                    System.out.printf("  %s - %s%n", 
+                        rs.getString("perm_num"), 
+                        rs.getString("name"));
+                }
+                if (!found) {
+                    System.out.println("  No students enrolled in this course.");
+                }
+            }
+        }
+    }
+
+    //dummy function to print hashed pins for all students, just a utility to help hard coding of hashed pins 
+    // public void printHashedPins() throws SQLException {
+    //     String sql = "SELECT perm_num, pin FROM student";
+    //     try (Statement stmt = conn.createStatement();
+    //          ResultSet rs = stmt.executeQuery(sql)) {
+            
+    //         System.out.println("\nCurrent PINs and their hashed versions:");
+    //         System.out.println("----------------------------------------");
+            
+    //         while (rs.next()) {
+    //             String perm = rs.getString("perm_num");
+    //             String currentPin = rs.getString("pin");
+    //             String hashedPin = hashPin(currentPin);
+                
+    //             System.out.printf("Student %s:%n", perm);
+    //             System.out.printf("  Current PIN: %s%n", currentPin);
+    //             System.out.printf("  Hashed PIN: %s%n", hashedPin);
+    //             System.out.println("----------------------------------------");
+    //         }
+    //     }
+    // }
+    
 
 }

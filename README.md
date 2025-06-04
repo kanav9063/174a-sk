@@ -2,7 +2,9 @@
 
 ## The Future of Academic Administration is Here!
 
-Welcome to **IVC Dynamo**, a state-of<img width="328" alt="Screenshot 2025-06-03 at 11 23 59 PM" src="https://github.com/user-attachments/assets/10369e97-8c7f-4490-a508-06c76c59cd31" />![Uploading Screenshot 2025-06-03 at 11.24.09 PM.png…]()
+Welcome to **IVC Dynamo**, a state-of<img width="328" alt="Screenshot 2025-06-03 at 11 23 59 PM" src="https://github.com/user-attachments/assets/10369e97-8c7f-4490-a508-06c76c59cd31" />
+<img width="276" alt="Screenshot 2025-06-03 at 11 24 35 PM" src="https://github.com/user-attachments/assets/bcc3366d-b82f-4ede-9588-2e183eb97ab9" />
+
 
 -the-art database system meticulously engineered to revolutionize academic operations at IV College. This isn't just a database; it's the central nervous system for student and course management, empowering both students and administrators with seamless, secure, and lightning-fast access to critical academic information.
 
